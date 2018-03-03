@@ -1,26 +1,70 @@
 
 export type Season = '2017-18' | '2016-17' | '2015-16'
 
+export enum TeamAbbreviation {
+  ATL = 'ATL',
+  BKN = 'BKN',
+  BOS = 'BOS',
+  CHA = 'CHA',
+  CHI = 'CHI',
+  CLE = 'CLE',
+  DAL = 'DAL',
+  DEN = 'DEN',
+  DET = 'DET',
+  GSW = 'GSW',
+  HOU = 'HOU',
+  IND = 'IND',
+  LAC = 'LAC',
+  LAL = 'LAL',
+  MEM = 'MEM',
+  MIA = 'MIA',
+  MIL = 'MIL',
+  MIN = 'MIN',
+  NOP = 'NOP',
+  NYK = 'NYK',
+  OKC = 'OKC',
+  ORL = 'ORL',
+  PHI = 'PHI',
+  PHX = 'PHX',
+  POR = 'POR',
+  SAC = 'SAC',
+  SAS = 'SAS',
+  TOR = 'TOR',
+  UTA = 'UTA',
+  WAS = 'WAS'
+}
+
+export enum SortDirection {
+  ASC = 'ASC',
+  DESC = 'DESC'
+}
+
+export enum GameOutcome {
+  Win = 'W',
+  Loss = 'L'
+}
+
+export interface TeamInfo {
+  abbreviation: TeamAbbreviation,
+  id: number,
+  name: string
+}
+
+export interface NBAStatsResultSet {
+  name: string,
+  headers: string[],
+  rowSet: any[][]
+}
+
 export interface RawNBAStatsData {
   resource: string,
   parameters: {[k: string]: string | number},
-  resultSets: {
-    name: string,
-    headers: string[],
-    rowSet: (string | number)[][]
-  }[]
+  resultSets: NBAStatsResultSet[]
 }
 
-export interface GameLog {
-  SEASON_ID: Season,
-  TEAM_ID: number,
-  TEAM_ABBREVIATION: string,
-  TEAM_NAME: string,
+export interface BoxScoreStats {
   GAME_ID: string,
-  GAME_DATE: string,
-  MATCHUP: string,
-  OPPONENT_TEAM_ABBREVIATION: string,
-  WL: 'W' | 'L',
+  TEAM_ABBREVIATION: TeamAbbreviation,
   MIN: number,
   FGM: number,
   FGA: number,
@@ -37,9 +81,36 @@ export interface GameLog {
   AST: number,
   STL: number,
   BLK: number,
-  TOV: number,
+  TO: number,
   PF: number,
   PTS: number,
-  PLUS_MINUS: number,
+  PLUS_MINUS: number
+}
+
+export interface GameLog {
+  GAME_ID: string,
+  GAME_DATE: string,
+  SEASON_ID: Season,
+  TEAM_ABBREVIATION: TeamAbbreviation,
+  OPPONENT_TEAM_ABBREVIATION: TeamAbbreviation,
+  OUTCOME: GameOutcome,
+  HOME: boolean,
   VIDEO_AVAILABLE: boolean,
+  stats: BoxScoreStats
+}
+
+export interface PlayerBoxScore extends BoxScoreStats {
+  PLAYER_ID: string,
+  PLAYER_NAME: string,
+  START_POSITION: string,
+  COMMENT: string,
+}
+
+export interface TeamStartersBenchStats extends BoxScoreStats {
+  STARTERS_BENCH: 'Starters' | 'Bench'
+}
+
+export interface BoxScore {
+  game: GameLog,
+  playerStats: PlayerBoxScore[]
 }

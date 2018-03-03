@@ -1,8 +1,10 @@
 #!/usr/bin/env ts-node
 
 import * as program from 'commander'
-import { Season } from './types'
-import { saveGameLog } from './save-game-log'
+import { Season, TeamAbbreviation, BoxScore } from './types'
+import { fetchGameLog, fetchBoxScore } from './api'
+import { loadGameLogs, saveSeasonData, saveTeamData } from './data'
+import { delay } from './util'
 
 export interface CliOptions {
   season: Season
@@ -13,7 +15,8 @@ const defaultOptions: CliOptions = {
 }
 
 const functionMap: { [key: string]: (options: CliOptions) => any } = {
-  saveGameLog
+  saveGameLogs,
+  saveBoxScores
 }
 
 program
@@ -47,4 +50,37 @@ async function main() {
 function logHelp() {
   console.log('Here is some help... run --help for more')
   console.log('Possible functions:', Object.keys(functionMap).join(', '))
+}
+
+
+export async function saveGameLogs({ season }: CliOptions) {
+  console.log('Fetching...')
+  const gameLogs = await fetchGameLog({ Season: season })
+
+  const filename = await saveSeasonData(gameLogs, { season, category: 'game_logs' })
+  console.log('Saved to', filename)
+}
+
+export async function saveBoxScores({ season }: CliOptions) {
+  const gameLogs = await loadGameLogs(season)
+  const gameIds = new Set(gameLogs.map(g => g.GAME_ID))
+
+  const boxScoresByTeam = new Map<TeamAbbreviation, BoxScore[]>()
+  for (const GameID of gameIds) {
+    console.log(`Fetching game ${GameID}...`)
+    const boxScores = await fetchBoxScore({ GameID, season })
+    if (boxScores) {
+      boxScores.forEach(bs => {
+        const list = boxScoresByTeam.get(bs.game.TEAM_ABBREVIATION) || []
+        list.push(bs)
+        boxScoresByTeam.set(bs.game.TEAM_ABBREVIATION, list)
+      })
+    }
+    await delay(500)
+  }
+
+  for (const [team, boxScores] of boxScoresByTeam) {
+    const filename = await saveTeamData(boxScores, { season, category: 'box_scores', team })
+    console.log(`Saved ${team} to ${filename}`)
+  }
 }
