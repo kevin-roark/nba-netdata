@@ -54,7 +54,8 @@ export interface PlayerInfo {
   id: string,
   name: string,
   position: string,
-  comment: string
+  comment: string,
+  teams: {[season: string]: {[abbr: string]: true }}
 }
 
 export interface NBAStatsResultSet {
@@ -122,10 +123,15 @@ export interface BoxScore {
   playerStats: PlayerBoxScoreStats[]
 }
 
+export interface GameStats {
+  game: GameLog,
+  stats: BoxScoreStats
+}
+
 export interface PlayerBoxScores {
   player: PlayerInfo,
-  scores: {
-    game: GameLog,
-    stats: BoxScoreStats
-  }[]
+  scores: GameStats[]
 }
+
+export type TeamMap = {[abbr: string]: TeamInfo }
+export type PlayerMap = {[id: string]: PlayerInfo}

@@ -44,6 +44,10 @@ export function processBoxScoreData(gameLogs: GameLog[], boxScoreData: RawNBASta
   })
 }
 
+export function pickBoxScoreStats<T extends BoxScoreStats>(t: T) {
+  return pick(t, ...boxScoreStatKeys)
+}
+
 function processResultSet(resultSet: NBAStatsResultSet) {
   const { headers, rowSet } = resultSet
   const data = rowSet.map(row => {
@@ -61,7 +65,7 @@ function processResultSet(resultSet: NBAStatsResultSet) {
 
 function processBoxScoreStats(data: any): BoxScoreStats {
   return {
-    ...pick(data, ...boxScoreStatKeys),
+    ...pickBoxScoreStats(data),
     TO: data.TO || data.TOV,
     MIN: minStringToMinutes(String(data.MIN)),
   }

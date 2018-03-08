@@ -4,7 +4,7 @@
   "description": "Collection of tools for gathering and processing NBA statistical data",
   "main": "N/A",
   "scripts": {
-    "test": "N/A"
+    "typecheck": "tsc --noEmit"
   },
   "author": "kevin roark jr (kevs_net)",
   "license": "MIT",
