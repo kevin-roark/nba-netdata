@@ -50,6 +50,13 @@ export interface TeamInfo {
   name: string
 }
 
+export interface PlayerInfo {
+  id: string,
+  name: string,
+  position: string,
+  comment: string
+}
+
 export interface NBAStatsResultSet {
   name: string,
   headers: string[],
@@ -99,7 +106,7 @@ export interface GameLog {
   stats: BoxScoreStats
 }
 
-export interface PlayerBoxScore extends BoxScoreStats {
+export interface PlayerBoxScoreStats extends BoxScoreStats {
   PLAYER_ID: string,
   PLAYER_NAME: string,
   START_POSITION: string,
@@ -112,5 +119,13 @@ export interface TeamStartersBenchStats extends BoxScoreStats {
 
 export interface BoxScore {
   game: GameLog,
-  playerStats: PlayerBoxScore[]
+  playerStats: PlayerBoxScoreStats[]
+}
+
+export interface PlayerBoxScores {
+  player: PlayerInfo,
+  scores: {
+    game: GameLog,
+    stats: BoxScoreStats
+  }[]
 }

@@ -1,7 +1,7 @@
 import * as path from 'path'
 import * as fs from 'fs-extra'
 import * as moment from 'moment'
-import { GameLog, Season, TeamAbbreviation } from './types'
+import { GameLog, BoxScore, Season, TeamAbbreviation } from './types'
 
 type DataCategory = 'game_logs' | 'box_scores'
 
@@ -31,6 +31,16 @@ export async function loadSeasonData(options: { category: DataCategory, season: 
 
 export async function loadGameLogs(season: Season) {
   return await loadSeasonData({ category: 'game_logs', season }) as GameLog[]
+}
+
+export async function loadTeamBoxScores(season: Season, team: TeamAbbreviation): Promise<BoxScore[]> {
+  const filename = path.join(dataDirectory, 'box_scores', season, `${team}.json`)
+  const data = await fs.readJson(filename)
+  return data
+}
+
+export async function loadPlayerBoxScores(season: Season, playerId: string) {
+
 }
 
 export function loadTeamMap() {

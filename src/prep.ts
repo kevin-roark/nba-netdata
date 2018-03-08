@@ -1,4 +1,4 @@
-import { RawNBAStatsData, NBAStatsResultSet, GameLog, BoxScore, BoxScoreStats, TeamAbbreviation, GameOutcome, PlayerBoxScore } from './types'
+import { RawNBAStatsData, NBAStatsResultSet, GameLog, BoxScore, BoxScoreStats, TeamAbbreviation, GameOutcome, PlayerBoxScoreStats } from './types'
 import { pick } from './util'
 
 const boxScoreStatKeys: (keyof BoxScoreStats)[] = [
@@ -67,7 +67,7 @@ function processBoxScoreStats(data: any): BoxScoreStats {
   }
 }
 
-function processPlayerBoxScoreStats(data: any): PlayerBoxScore {
+function processPlayerBoxScoreStats(data: any): PlayerBoxScoreStats {
   return {
     ...processBoxScoreStats(data),
     ...pick(data, 'PLAYER_ID', 'PLAYER_NAME', 'START_POSITION', 'COMMENT')
