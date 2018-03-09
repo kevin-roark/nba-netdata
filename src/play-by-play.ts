@@ -88,6 +88,8 @@ export interface PlayByPlayData<T extends PlayByPlayDataPoint> {
 
 export type PlayByPlayDataPointGetter<T extends PlayByPlayDataPoint> = (boxScores: CompleteGameBoxScores, data: RawNBAPlayByPlayDataPoint[], index: number) => T | null
 
+export type PlayByPlayShotData = PlayByPlayData<PlayByPlayShotDataPoint>
+
 export function getMatchingPlays (plays: RawNBAPlayByPlayDataPoint[], index: number) {
   const play = plays[index]
   const matching: number[] = []
@@ -264,6 +266,6 @@ export async function getPlayByPlayData<T extends PlayByPlayDataPoint>(data: Raw
   return { gameId, plays }
 }
 
-export async function getPlayByPlayShotData(data: RawNBAPlayByPlayData): Promise<PlayByPlayData<PlayByPlayShotDataPoint>> {
+export async function getPlayByPlayShotData(data: RawNBAPlayByPlayData): Promise<PlayByPlayShotData> {
   return await getPlayByPlayData(data, getPlayByPlayShotDataPoint)
 }

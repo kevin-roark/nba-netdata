@@ -1,9 +1,10 @@
 import * as path from 'path'
 import * as fs from 'fs-extra'
 import * as moment from 'moment'
+import slugify from 'slugify'
 import { GameLog, BoxScore, Season, TeamAbbreviation, TeamMap, PlayerMap, GameIdMap, CompleteGameBoxScores, GameStats, PlayerBoxScores, GameOutcome, PlayerInfo } from './types'
 
-type DataCategory = 'game_logs' | 'box_scores'
+export type DataCategory = 'game_logs' | 'box_scores'
 
 const nbaStatsPlayers = require('nba/data/players.json')
 const teamMap: TeamMap = require('../data/team_map.json')
@@ -120,15 +121,21 @@ export async function createTeamMap() {
 }
 
 export async function createPlayerMap() {
-  const playerMap: PlayerMap = {}
+  const playerMap: PlayerMap = {
+    idMap: {},
+    simpleIds: {}
+  }
 
+  const { idMap, simpleIds } = playerMap
+
+  // Create ID Map
   await Promise.all(boxScoreSeasons.map(async (season: Season) => {
     await Promise.all(allTeams.map(async (team) => {
       const boxScores = await loadTeamBoxScores(season, team)
       boxScores.forEach(boxScore => {
         boxScore.playerStats.forEach(playerStats => {
           const { PLAYER_ID, PLAYER_NAME, START_POSITION } = playerStats
-          if (!playerMap[PLAYER_ID]) {
+          if (!idMap[PLAYER_ID]) {
             let firstName: string, lastName: string
             const nbaStatsPlayer = nbaStatsPlayers.find(p => String(p.playerId) == PLAYER_ID)
             if (nbaStatsPlayer) {
@@ -144,20 +151,35 @@ export async function createPlayerMap() {
               }
             }
 
-            playerMap[PLAYER_ID] = {
+            idMap[PLAYER_ID] = {
               firstName, lastName,
               id: PLAYER_ID,
+              simpleId: '',
               position: START_POSITION,
               teams: {}
             }
           }
 
-          const playerData = playerMap[PLAYER_ID]
+          const playerData = idMap[PLAYER_ID]
           playerData.teams[season] = { ...playerData.teams[season], [team]: true }
         })
       })
     }))
   }))
+
+  // Create Simple ID Map
+  Object.keys(idMap).forEach(playerId => {
+    const { firstName, lastName } = idMap[playerId]
+    const nameSlug = slugify(`${firstName} ${lastName}`, { lower: true })
+
+    // we have to increment slugs for players with the same name
+    let slug = nameSlug
+    for (let i = 1; simpleIds[slug]; i++) {
+      slug = `${nameSlug}-${i}`
+    }
+    simpleIds[slug] = playerId
+    idMap[playerId].simpleId = slug
+  })
 
   await writeJSON(path.join(dataDirectory, 'player_map.json'), playerMap)
 }

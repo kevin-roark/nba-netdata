@@ -77,6 +77,7 @@ export interface TeamInfo {
 
 export interface PlayerInfo {
   id: string,
+  simpleId: string,
   firstName: string,
   lastName: string,
   position: string,
@@ -172,7 +173,12 @@ export interface CompleteGameBoxScores {
 }
 
 export type TeamMap = {[abbr: string]: TeamInfo }
-export type PlayerMap = {[id: string]: PlayerInfo }
+export interface PlayerMap {
+  idMap: { [id: string]: PlayerInfo },
+  simpleIds: { [simpleId: string]: string }
+}
 export type GameIdMap = {[id: string]: GameInfo }
 
 export type Period = 1 | 2 | 3 | 4
+
+export type ShotSet = {[shotType: string]: { made: number, attempted: number }}

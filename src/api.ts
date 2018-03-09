@@ -1,8 +1,8 @@
 import * as NBA from 'nba'
-import { Season, SortDirection, GameLog } from './types'
+import { Season, SortDirection, GameLog, BoxScore } from './types'
 import { loadGameLogs } from './data'
 import { processGameLogData, processBoxScoreData } from './prep'
-import { getPlayByPlayShotData } from './play-by-play'
+import { getPlayByPlayShotData, PlayByPlayShotData } from './play-by-play'
 import { pick } from './util'
 
 export enum APIGamePeriod {
@@ -12,12 +12,12 @@ export enum APIGamePeriod {
   Q4 = '3'
 }
 
-interface BaseApiOptions {
+export interface BaseApiOptions {
   Sorter?: string,
   Direction?: SortDirection
 }
 
-interface GameLogApiOptions extends BaseApiOptions {
+export interface GameLogApiOptions extends BaseApiOptions {
   Season?: Season,
   PlayerOrTeam?: 'T' | 'P'
 }
@@ -35,13 +35,13 @@ export async function fetchGameLog(options: GameLogApiOptions) {
   return processGameLogData(data)
 }
 
-interface BoxScoreApiOptions extends BaseApiOptions {
+export interface BoxScoreApiOptions extends BaseApiOptions {
   season?: Season,
   gameLogs?: GameLog[],
   GameID: string
 }
 
-export async function fetchBoxScore(options: BoxScoreApiOptions) {
+export async function fetchBoxScore(options: BoxScoreApiOptions): Promise<BoxScore[] | null> {
   let { gameLogs } = options
   if (!gameLogs) {
     gameLogs = await loadGameLogs(options.season!)
@@ -59,13 +59,13 @@ export async function fetchBoxScoreSummary(options: BoxScoreApiOptions) {
   return summary
 }
 
-interface PlayByPlayApiOptions {
+export interface PlayByPlayApiOptions {
   GameID: string,
   StartPeriod?: APIGamePeriod,
   EndPeriod?: APIGamePeriod
 }
 
-export async function fetchPlayByPlayShotData(options: PlayByPlayApiOptions) {
+export async function fetchPlayByPlayShotData(options: PlayByPlayApiOptions): Promise<PlayByPlayShotData | null> {
   const data = await NBA.stats.playByPlay(options)
   if (!data) {
     return null

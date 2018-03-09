@@ -1,6 +1,4 @@
-import { ShotType, Percent, ShotInfo, allShotTypes, BoxScoreStats } from './types'
-
-type ShotSet = {[shotType: string]: { made: number, attempted: number }}
+import { ShotType, Percent, ShotInfo, allShotTypes, BoxScoreStats, ShotSet } from './types'
 
 // inspired by https://www.cleaningtheglass.com/stats/guide/player_shooting_loc
 export function get2PTShotType(distance: number): ShotType | null {
@@ -50,15 +48,13 @@ export function calculateTrueShootingAttempts(fieldGoalsAttempted: number, freeT
   return fieldGoalsAttempted + 0.44 * freeThrowsAttempted
 }
 
-interface TSPData {
+export function calculateTrueShootingPercentage(data: {
   freeThrowsMade: number,
   freeThrowsAttempted: number,
   twoPointersMade: number,
   threePointersMade: number,
   fieldGoalsAttempted: number
-}
-
-export function calculateTrueShootingPercentage(data: TSPData): Percent {
+}): Percent {
   const tsa = calculateTrueShootingAttempts(data.fieldGoalsAttempted, data.freeThrowsAttempted)
   const points = data.freeThrowsMade + data.twoPointersMade * 2 + data.threePointersMade * 3
   return points / (2 * tsa)
