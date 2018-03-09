@@ -11,7 +11,7 @@ const teamMap: TeamMap = require('../data/team_map.json')
 const playerMap: PlayerMap = require('../data/player_map.json')
 const gameIdMap: GameIdMap = require('../data/game_id_map.json')
 
-const dataDirectory = path.resolve('data')
+const dataDirectory = path.resolve(`${__dirname}/../data`)
 const gameLogsDir = path.join(dataDirectory, 'game_logs')
 const boxScoresDir = path.join(dataDirectory, 'box_scores')
 

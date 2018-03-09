@@ -2,8 +2,10 @@
   "name": "nba-netdata",
   "version": "0.1.0",
   "description": "Collection of tools for gathering and processing NBA statistical data",
-  "main": "N/A",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
+    "build": "tsc",
     "typecheck": "tsc --noEmit"
   },
   "author": "kevin roark jr (kevs_net)",
