@@ -1,5 +1,5 @@
 import * as moment from 'moment'
-import { Period, CompleteGameBoxScores, TeamAbbreviation, ShotType, FoulType } from './types'
+import { Period, CompleteGameBoxScores, TeamAbbreviation, ShotType, FoulType, ShotInfo } from './types'
 import { pick, findPlayerInText } from './util'
 import { loadGameBoxScores } from './data'
 import { get2PTShotType, getShotTypePointValue } from './calc'
@@ -73,13 +73,10 @@ export interface PlayByPlayDataPoint {
   eventActionType: NBAPlayByPlayMessageActionType,
 }
 
-export interface PlayByPlayShotDataPoint extends PlayByPlayDataPoint {
+export interface PlayByPlayShotDataPoint extends PlayByPlayDataPoint, ShotInfo {
   eventDescription: string,
   playerId: string,
   team: TeamAbbreviation,
-  shotType: ShotType,
-  miss: boolean,
-  pointValue: number,
   assistingPlayerName: string | null,
   foulingPlayerName: string | null
 }

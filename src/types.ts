@@ -1,3 +1,4 @@
+export type Percent = number
 
 export type Season = '2017-18' | '2016-17' | '2015-16'
 
@@ -52,11 +53,19 @@ export enum ShotType {
   FreeThrow = 'freeThrow'
 }
 
+export const allShotTypes = [ShotType.Rim, ShotType.ShortMidRange, ShotType.LongMidRange, ShotType.ThreePt, ShotType.FreeThrow]
+
 export enum FoulType {
   Shooting = 'shooting',
   Personal = 'personal',
   Offensive = 'offensive',
   Technical = 'technical'
+}
+
+export interface ShotInfo {
+  shotType: ShotType,
+  miss: boolean,
+  pointValue: number
 }
 
 export interface TeamInfo {
