@@ -44,6 +44,21 @@ export enum GameOutcome {
   Loss = 'L'
 }
 
+export enum ShotType {
+  Rim = 'rim',
+  ShortMidRange = 'shortMidRange',
+  LongMidRange = 'longMidRange',
+  ThreePt = 'three',
+  FreeThrow = 'freeThrow'
+}
+
+export enum FoulType {
+  Shooting = 'shooting',
+  Personal = 'personal',
+  Offensive = 'offensive',
+  Technical = 'technical'
+}
+
 export interface TeamInfo {
   abbreviation: TeamAbbreviation,
   id: number,
@@ -52,10 +67,19 @@ export interface TeamInfo {
 
 export interface PlayerInfo {
   id: string,
-  name: string,
+  firstName: string,
+  lastName: string,
   position: string,
   comment: string,
   teams: {[season: string]: {[abbr: string]: true }}
+}
+
+export interface GameInfo {
+  id: string,
+  season: Season,
+  home: TeamAbbreviation,
+  away: TeamAbbreviation,
+  winner: TeamAbbreviation
 }
 
 export interface NBAStatsResultSet {
@@ -133,5 +157,13 @@ export interface PlayerBoxScores {
   scores: GameStats[]
 }
 
+export interface CompleteGameBoxScores {
+  home: { team: TeamAbbreviation, score: BoxScore, players: PlayerInfo[] },
+  away: { team: TeamAbbreviation, score: BoxScore, players: PlayerInfo[] }
+}
+
 export type TeamMap = {[abbr: string]: TeamInfo }
-export type PlayerMap = {[id: string]: PlayerInfo}
+export type PlayerMap = {[id: string]: PlayerInfo }
+export type GameIdMap = {[id: string]: GameInfo }
+
+export type Period = 1 | 2 | 3 | 4
