@@ -3,7 +3,7 @@
 import * as program from 'commander'
 import { Season, TeamAbbreviation, BoxScore } from './types'
 import { fetchGameLog, fetchBoxScore } from './api'
-import { loadGameLogs, saveSeasonData, saveTeamData } from './data'
+import { loadGameLogs, saveSeasonData, saveTeamData, createPlayerMap, createGameIdMap } from './data'
 import { delay } from './util'
 
 export interface CliOptions {
@@ -16,7 +16,10 @@ const defaultOptions: CliOptions = {
 
 const functionMap: { [key: string]: (options: CliOptions) => any } = {
   saveGameLogs,
-  saveBoxScores
+  saveBoxScores,
+  saveLatestData,
+  createPlayerMap,
+  createGameIdMap
 }
 
 program
@@ -83,4 +86,11 @@ export async function saveBoxScores({ season }: CliOptions) {
     const filename = await saveTeamData(boxScores, { season, category: 'box_scores', team })
     console.log(`Saved ${team} to ${filename}`)
   }
+}
+
+export async function saveLatestData(options: CliOptions) {
+  await saveGameLogs(options)
+  await saveBoxScores(options)
+  await createPlayerMap()
+  await createGameIdMap()
 }

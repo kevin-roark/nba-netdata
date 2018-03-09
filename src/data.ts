@@ -127,7 +127,7 @@ export async function createPlayerMap() {
       const boxScores = await loadTeamBoxScores(season, team)
       boxScores.forEach(boxScore => {
         boxScore.playerStats.forEach(playerStats => {
-          const { PLAYER_ID, PLAYER_NAME, START_POSITION, COMMENT } = playerStats
+          const { PLAYER_ID, PLAYER_NAME, START_POSITION } = playerStats
           if (!playerMap[PLAYER_ID]) {
             let firstName: string, lastName: string
             const nbaStatsPlayer = nbaStatsPlayers.find(p => String(p.playerId) == PLAYER_ID)
@@ -148,7 +148,6 @@ export async function createPlayerMap() {
               firstName, lastName,
               id: PLAYER_ID,
               position: START_POSITION,
-              comment: COMMENT,
               teams: {}
             }
           }

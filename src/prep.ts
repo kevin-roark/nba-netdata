@@ -74,7 +74,8 @@ function processBoxScoreStats(data: any): BoxScoreStats {
 function processPlayerBoxScoreStats(data: any): PlayerBoxScoreStats {
   return {
     ...processBoxScoreStats(data),
-    ...pick(data, 'PLAYER_ID', 'PLAYER_NAME', 'START_POSITION', 'COMMENT')
+    ...pick(data, 'PLAYER_ID', 'PLAYER_NAME', 'START_POSITION'),
+    COMMENT: (data.COMMENT as string).trim()
   }
 }
 

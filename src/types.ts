@@ -80,7 +80,6 @@ export interface PlayerInfo {
   firstName: string,
   lastName: string,
   position: string,
-  comment: string,
   teams: {[season: string]: {[abbr: string]: true }}
 }
 

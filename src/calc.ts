@@ -2,6 +2,7 @@ import { ShotType, Percent, ShotInfo, allShotTypes, BoxScoreStats } from './type
 
 type ShotSet = {[shotType: string]: { made: number, attempted: number }}
 
+// inspired by https://www.cleaningtheglass.com/stats/guide/player_shooting_loc
 export function get2PTShotType(distance: number): ShotType | null {
   if (distance < 0) {
     return null
