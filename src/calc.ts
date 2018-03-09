@@ -1,4 +1,4 @@
-import { ShotType, Percent, ShotInfo, allShotTypes } from './types'
+import { ShotType, Percent, ShotInfo, allShotTypes, BoxScoreStats } from './types'
 
 type ShotSet = {[shotType: string]: { made: number, attempted: number }}
 
@@ -25,14 +25,11 @@ export function getShotTypePointValue(shotType: ShotType): number {
     case ShotType.Rim:
     case ShotType.ShortMidRange:
     case ShotType.LongMidRange:
+    case ShotType.UnknownTwoPt:
       return 2
     case ShotType.ThreePt:
       return 3
   }
-}
-
-export function isShotTypeTwoPointer(shotType: ShotType): boolean {
-  return shotType === ShotType.LongMidRange || shotType === ShotType.ShortMidRange || shotType === ShotType.Rim
 }
 
 export function calculateShotPercentage(makes: number, attempts: number): Percent {
@@ -66,12 +63,16 @@ export function calculateTrueShootingPercentage(data: TSPData): Percent {
   return points / (2 * tsa)
 }
 
-export function shotsToShotSet(shots: ShotInfo[]): ShotSet {
+const blankShotSet = () => {
   const set: ShotSet = {}
   allShotTypes.forEach(type => {
     set[type] = { made: 0, attempted: 0 }
   })
+  return set
+}
 
+export function shotsToShotSet(shots: ShotInfo[]): ShotSet {
+  const set = blankShotSet()
   shots.forEach(({ shotType, miss }) => {
     shots[shotType].attempted += 1
     if (!miss) {
@@ -86,14 +87,24 @@ export function calculateShootingDataFromShots(shots: ShotInfo[]) {
   return calculateShootingData(shotsToShotSet(shots))
 }
 
+export function calculateShootingDataFromBoxScoreStats(boxScore: BoxScoreStats) {
+  const set = blankShotSet()
+  set[ShotType.FreeThrow] = { made: boxScore.FTM, attempted: boxScore.FTA }
+  set[ShotType.ThreePt] = { made: boxScore.FG3M, attempted: boxScore.FG3A }
+  set[ShotType.UnknownTwoPt] = { made: boxScore.FGM - boxScore.FG3M, attempted: boxScore.FGA - boxScore.FG3A }
+
+  return calculateShootingData(set)
+}
+
 export function calculateShootingData(shotSet: ShotSet) {
   const { made: freeThrowsMade, attempted: freeThrowsAttempted } = shotSet[ShotType.FreeThrow]
   const { made: threePointersMade, attempted: threePointersAttempted } = shotSet[ShotType.ThreePt]
   const { made: rimTwoPointersMade, attempted: rimTwoPointersAttempted } = shotSet[ShotType.Rim]
   const { made: shortTwoPointersMade, attempted: shortTwoPointersAttempted } = shotSet[ShotType.ShortMidRange]
   const { made: longTwoPointersMade, attempted: longTwoPointersAttempted } = shotSet[ShotType.LongMidRange]
-  const twoPointersMade = rimTwoPointersMade + shortTwoPointersMade + longTwoPointersMade
-  const twoPointersAttempted = rimTwoPointersAttempted + shortTwoPointersAttempted + longTwoPointersAttempted
+  const { made: unknownTwoPointersMade, attempted: unknownTwoPointersAttempted } = shotSet[ShotType.UnknownTwoPt]
+  const twoPointersMade = rimTwoPointersMade + shortTwoPointersMade + longTwoPointersMade + unknownTwoPointersMade
+  const twoPointersAttempted = rimTwoPointersAttempted + shortTwoPointersAttempted + longTwoPointersAttempted + unknownTwoPointersAttempted
   const fieldGoalsMade = twoPointersMade + threePointersMade
   const fieldGoalsAttempted = twoPointersAttempted + threePointersAttempted
 

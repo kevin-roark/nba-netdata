@@ -49,11 +49,12 @@ export enum ShotType {
   Rim = 'rim',
   ShortMidRange = 'shortMidRange',
   LongMidRange = 'longMidRange',
+  UnknownTwoPt = 'unknwonTwoPt',
   ThreePt = 'three',
   FreeThrow = 'freeThrow'
 }
 
-export const allShotTypes = [ShotType.Rim, ShotType.ShortMidRange, ShotType.LongMidRange, ShotType.ThreePt, ShotType.FreeThrow]
+export const allShotTypes = [ShotType.Rim, ShotType.ShortMidRange, ShotType.LongMidRange, ShotType.UnknownTwoPt, ShotType.ThreePt, ShotType.FreeThrow]
 
 export enum FoulType {
   Shooting = 'shooting',
