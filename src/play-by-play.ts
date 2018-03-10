@@ -1,7 +1,6 @@
 import * as moment from 'moment'
 import { Period, CompleteGameBoxScores, TeamAbbreviation, ShotType, FoulType, ShotInfo } from './types'
 import { pick, findPlayerInText } from './util'
-import { loadGameBoxScores } from './data'
 import { get2PTShotType, getShotTypePointValue } from './calc'
 
 const SecondsPerPeriod = 12 * 60
@@ -257,15 +256,14 @@ export function getPlayByPlayShotDataPoint(boxScores: CompleteGameBoxScores, poi
   return { ...point, ...shotInfo, eventDescription, playerId, team, foulingPlayerName }
 }
 
-export async function getPlayByPlayData<T extends PlayByPlayDataPoint>(data: RawNBAPlayByPlayData, getter: PlayByPlayDataPointGetter<T>): Promise<PlayByPlayData<T>> {
+export function getPlayByPlayData<T extends PlayByPlayDataPoint>(data: RawNBAPlayByPlayData, gameBoxScores: CompleteGameBoxScores, getter: PlayByPlayDataPointGetter<T>): PlayByPlayData<T> {
   const gameId = data.playByPlay[0].gameId
-  const gameBoxScores = await loadGameBoxScores(gameId)
-  const points = data.playByPlay.map((d, i) => getter(gameBoxScores!, data.playByPlay, i))
+  const points = data.playByPlay.map((d, i) => getter(gameBoxScores, data.playByPlay, i))
   const plays = points.filter(p => !!p) as T[]
 
   return { gameId, plays }
 }
 
-export async function getPlayByPlayShotData(data: RawNBAPlayByPlayData): Promise<PlayByPlayShotData> {
-  return await getPlayByPlayData(data, getPlayByPlayShotDataPoint)
+export function getPlayByPlayShotData(data: RawNBAPlayByPlayData, gameBoxScores: CompleteGameBoxScores): PlayByPlayShotData {
+  return getPlayByPlayData(data, gameBoxScores, getPlayByPlayShotDataPoint)
 }

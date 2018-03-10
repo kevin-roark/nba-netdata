@@ -2,8 +2,7 @@
 
 import * as program from 'commander'
 import { Season, TeamAbbreviation, BoxScore } from './types'
-import { fetchGameLog, fetchBoxScore } from './api'
-import { loadGameLogs, saveSeasonData, saveTeamData, createPlayerMap, createGameIdMap } from './data'
+import fsDataManager from './fs-data-manager'
 import { delay } from './util'
 
 export interface CliOptions {
@@ -18,8 +17,6 @@ const functionMap: { [key: string]: (options: CliOptions) => any } = {
   saveGameLogs,
   saveBoxScores,
   saveLatestData,
-  createPlayerMap,
-  createGameIdMap
 }
 
 program
@@ -58,20 +55,20 @@ function logHelp() {
 
 export async function saveGameLogs({ season }: CliOptions) {
   console.log('Fetching...')
-  const gameLogs = await fetchGameLog({ Season: season })
+  const gameLogs = await fsDataManager.fetchGameLog({ Season: season })
 
-  const filename = await saveSeasonData(gameLogs, { season, category: 'game_logs' })
+  const filename = await fsDataManager.saveGameLogs(gameLogs, season)
   console.log('Saved to', filename)
 }
 
 export async function saveBoxScores({ season }: CliOptions) {
-  const gameLogs = await loadGameLogs(season)
+  const gameLogs = await fsDataManager.loadGameLogs(season)
   const gameIds = new Set(gameLogs.map(g => g.GAME_ID))
 
   const boxScoresByTeam = new Map<TeamAbbreviation, BoxScore[]>()
   for (const GameID of gameIds) {
     console.log(`Fetching game ${GameID}...`)
-    const boxScores = await fetchBoxScore({ GameID, season })
+    const boxScores = await fsDataManager.fetchBoxScore({ GameID, season })
     if (boxScores) {
       boxScores.forEach(bs => {
         const list = boxScoresByTeam.get(bs.game.TEAM_ABBREVIATION) || []
@@ -83,7 +80,7 @@ export async function saveBoxScores({ season }: CliOptions) {
   }
 
   for (const [team, boxScores] of boxScoresByTeam) {
-    const filename = await saveTeamData(boxScores, { season, category: 'box_scores', team })
+    const filename = await fsDataManager.saveTeamBoxScores(boxScores, season, team)
     console.log(`Saved ${team} to ${filename}`)
   }
 }
@@ -91,6 +88,6 @@ export async function saveBoxScores({ season }: CliOptions) {
 export async function saveLatestData(options: CliOptions) {
   await saveGameLogs(options)
   await saveBoxScores(options)
-  await createPlayerMap()
-  await createGameIdMap()
+  await fsDataManager.createPlayerMap()
+  await fsDataManager.createGameIdMap()
 }
