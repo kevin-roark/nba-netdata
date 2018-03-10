@@ -81,7 +81,7 @@ export interface PlayerInfo {
   firstName: string,
   lastName: string,
   position: string,
-  teams: {[season: string]: {[abbr: string]: true }}
+  teams: {[season: string]: { team: TeamAbbreviation, startDate: string, endDate: string }[] }
 }
 
 export interface GameInfo {

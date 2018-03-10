@@ -13,7 +13,21 @@ export function getTeamsInfo(): TeamInfo[] {
   return Object.keys(teamMap).map(k => teamMap[k]).sort((a, b) => a.abbreviation.localeCompare(b.abbreviation))
 }
 
+export function getTeamWithAbbreviation(abbr: TeamAbbreviation): TeamInfo {
+  return teamMap[abbr]
+}
+
 export function getPlayersInfo(): PlayerInfo[] {
   const playerIdMap = playerMap.idMap
   return Object.keys(playerIdMap).map(k => playerIdMap[k]).sort((a, b) => a.simpleId.localeCompare(b.simpleId))
+}
+
+export function getPlayerWithSimpleId(simpleId: string): PlayerInfo | null {
+  const nbaId = playerMap.simpleIds[simpleId]
+  if (!nbaId) {
+    return null
+  }
+
+  const player = playerMap.idMap[nbaId]
+  return player || null
 }

@@ -26,8 +26,6 @@ export class DataManager {
     this.fileGetter = fileGetter
   }
 
-  get getPathData() { return this.fileGetter.getPathData }
-
   getSeasonPath(category: DataCategory, season: Season) {
     return join(category, `${season}.json`)
   }
@@ -37,11 +35,11 @@ export class DataManager {
   }
 
   async loadSeasonData(category: DataCategory, season: Season) {
-    return await this.getPathData(this.getSeasonPath(category, season))
+    return await this.fileGetter.getPathData(this.getSeasonPath(category, season))
   }
 
   async loadTeamData(category: DataCategory, season: Season, team: TeamAbbreviation) {
-    return await this.getPathData(this.getTeamSeasonPath(category, season, team))
+    return await this.fileGetter.getPathData(this.getTeamSeasonPath(category, season, team))
   }
 
   async loadGameLogs(season: Season): Promise<GameLog[]> {

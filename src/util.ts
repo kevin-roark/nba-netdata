@@ -33,3 +33,23 @@ export function findPlayerInText (text: string, players: PlayerInfo[]): PlayerIn
 
   return null
 }
+
+export function getPlayerNames (name: string, id: string, nbaStatsPlayers: { playerId: string, firstName: string, lastName: string }[]) {
+  let firstName: string, lastName: string
+
+  const nbaStatsPlayer = nbaStatsPlayers.find(p => String(p.playerId) == id)
+  if (nbaStatsPlayer) {
+    firstName = nbaStatsPlayer.firstName
+    lastName = nbaStatsPlayer.lastName || nbaStatsPlayer.firstName
+  } else {
+    const firstSpaceIdx = name.indexOf(' ')
+    if (firstSpaceIdx === -1) {
+      firstName = lastName = name
+    } else {
+      firstName = name.substr(0, firstSpaceIdx)
+      lastName = name.substr(firstSpaceIdx + 1)
+    }
+  }
+
+  return { firstName, lastName }
+}

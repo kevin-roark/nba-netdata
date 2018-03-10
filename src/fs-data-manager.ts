@@ -4,8 +4,9 @@ import slugify from 'slugify'
 import { GameLog, BoxScore, Season, TeamAbbreviation, TeamMap, PlayerMap, GameIdMap, GameOutcome } from './types'
 import { boxScoreSeasons, gameLogSeasons, allTeams } from './data'
 import { DataManager, DataCategory } from './data-manager'
+import { getPlayerNames } from './util'
 
-export const nbaStatsPlayers = require('nba/data/players.json')
+const nbaStatsPlayers = require('nba/data/players.json')
 const dataDirectory = resolve(`${__dirname}/../data`)
 
 class FsFileGetter {
@@ -68,24 +69,11 @@ export class FsDataManager extends DataManager {
     await Promise.all(boxScoreSeasons.map(async (season: Season) => {
       await Promise.all(allTeams.map(async (team) => {
         const boxScores = await this.loadTeamBoxScores(season, team)
-        boxScores.forEach(boxScore => {
+        boxScores.forEach(boxScore => { // we leverage that this is a sorted array!
           boxScore.playerStats.forEach(playerStats => {
             const { PLAYER_ID, PLAYER_NAME, START_POSITION } = playerStats
             if (!idMap[PLAYER_ID]) {
-              let firstName: string, lastName: string
-              const nbaStatsPlayer = nbaStatsPlayers.find(p => String(p.playerId) == PLAYER_ID)
-              if (nbaStatsPlayer) {
-                firstName = nbaStatsPlayer.firstName
-                lastName = nbaStatsPlayer.lastName || nbaStatsPlayer.firstName
-              } else {
-                const firstSpaceIdx = PLAYER_NAME.indexOf(' ')
-                if (firstSpaceIdx === -1) {
-                  firstName = lastName = PLAYER_NAME
-                } else {
-                  firstName = PLAYER_NAME.substr(0, firstSpaceIdx)
-                  lastName = PLAYER_NAME.substr(firstSpaceIdx + 1)
-                }
-              }
+              const { firstName, lastName } = getPlayerNames(PLAYER_NAME, PLAYER_ID, nbaStatsPlayers)
 
               idMap[PLAYER_ID] = {
                 firstName, lastName,
@@ -97,15 +85,25 @@ export class FsDataManager extends DataManager {
             }
 
             const playerData = idMap[PLAYER_ID]
-            playerData.teams[season] = { ...playerData.teams[season], [team]: true }
+            if (!playerData.teams[season]) {
+              playerData.teams[season] = []
+            }
+
+            const seasonTeams = playerData.teams[season]
+            const teamSeasonData = seasonTeams.find(item => item.team === team)
+            if (!teamSeasonData) {
+              seasonTeams.push({ team, startDate: boxScore.game.GAME_DATE, endDate: boxScore.game.GAME_DATE })
+            } else {
+              teamSeasonData.endDate = boxScore.game.GAME_DATE
+            }
           })
         })
       }))
     }))
 
-    // Create Simple ID Map
+    // Create Simple ID Map / Sort player teams
     Object.keys(idMap).forEach(playerId => {
-      const { firstName, lastName } = idMap[playerId]
+      const { firstName, lastName, teams } = idMap[playerId]
       const nameSlug = slugify(`${firstName} ${lastName}`, { lower: true })
 
       // we have to increment slugs for players with the same name
@@ -115,6 +113,10 @@ export class FsDataManager extends DataManager {
       }
       simpleIds[slug] = playerId
       idMap[playerId].simpleId = slug
+
+      Object.keys(teams).forEach(teamSeason => {
+        teams[teamSeason].sort((a, b) => a.startDate.localeCompare(b.startDate))
+      })
     })
 
     await writeJSON(join(dataDirectory, 'player_map.json'), playerMap)
