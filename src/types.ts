@@ -104,19 +104,14 @@ export interface RawNBAStatsData {
   resultSets: NBAStatsResultSet[]
 }
 
-export interface BoxScoreStats {
-  GAME_ID: string,
-  TEAM_ABBREVIATION: TeamAbbreviation,
+export interface NonDerivedBoxScoreStats {
   MIN: number,
   FGM: number,
   FGA: number,
-  FG_PCT: number,
   FG3M: number,
   FG3A: number,
-  FG3_PCT: number,
   FTM: number,
   FTA: number,
-  FT_PCT: number,
   OREB: number,
   DREB: number,
   REB: number,
@@ -127,6 +122,17 @@ export interface BoxScoreStats {
   PF: number,
   PTS: number,
   PLUS_MINUS: number
+}
+
+export interface BoxScoreStats extends NonDerivedBoxScoreStats {
+  FG_PCT: number,
+  FG3_PCT: number,
+  FT_PCT: number
+}
+
+export interface GameBoxScoreStats extends BoxScoreStats {
+  GAME_ID: string,
+  TEAM_ABBREVIATION: TeamAbbreviation
 }
 
 export interface GameLog {
@@ -141,15 +147,11 @@ export interface GameLog {
   stats: BoxScoreStats
 }
 
-export interface PlayerBoxScoreStats extends BoxScoreStats {
+export interface PlayerBoxScoreStats extends GameBoxScoreStats {
   PLAYER_ID: string,
   PLAYER_NAME: string,
   START_POSITION: string,
   COMMENT: string,
-}
-
-export interface TeamStartersBenchStats extends BoxScoreStats {
-  STARTERS_BENCH: 'Starters' | 'Bench'
 }
 
 export interface BoxScore {

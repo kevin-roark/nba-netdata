@@ -1,7 +1,7 @@
-import { RawNBAStatsData, NBAStatsResultSet, GameLog, BoxScore, BoxScoreStats, TeamAbbreviation, GameOutcome, PlayerBoxScoreStats } from './types'
+import { RawNBAStatsData, NBAStatsResultSet, GameLog, BoxScore, GameBoxScoreStats, TeamAbbreviation, GameOutcome, PlayerBoxScoreStats } from './types'
 import { pick } from './util'
 
-const boxScoreStatKeys: (keyof BoxScoreStats)[] = [
+const boxScoreStatKeys: (keyof GameBoxScoreStats)[] = [
   'GAME_ID', 'TEAM_ABBREVIATION',
   'MIN', 'FGM', 'FGA', 'FG_PCT', 'FG3M', 'FG3A', 'FG3_PCT', 'FTM',
   'FTA', 'FT_PCT', 'OREB', 'DREB', 'REB', 'AST', 'STL', 'BLK',
@@ -44,7 +44,7 @@ export function processBoxScoreData(gameLogs: GameLog[], boxScoreData: RawNBASta
   })
 }
 
-export function pickBoxScoreStats<T extends BoxScoreStats>(t: T) {
+export function pickBoxScoreStats<T extends GameBoxScoreStats>(t: T) {
   return pick(t, ...boxScoreStatKeys)
 }
 
@@ -63,7 +63,7 @@ function processResultSet(resultSet: NBAStatsResultSet) {
   return data
 }
 
-function processBoxScoreStats(data: any): BoxScoreStats {
+function processBoxScoreStats(data: any): GameBoxScoreStats {
   return {
     ...pickBoxScoreStats(data),
     TO: data.TO || data.TOV,

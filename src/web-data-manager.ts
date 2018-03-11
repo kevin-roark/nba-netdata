@@ -1,5 +1,19 @@
-const { PUBLIC_URL } = process.env
+import promiseRetry from 'promise-retry'
 import { DataManager } from './data-manager'
+
+async function fetchJson(url: string) {
+  const res = await fetch(url)
+  if (!res.ok) {
+    throw new Error('Response not ok...')
+  }
+
+  const json = await res.json()
+  if (!json) {
+    throw new Error('res.json() returning nothing...')
+  }
+
+  return json
+}
 
 export class WebFileGetter {
   pathPrefix: string
@@ -18,18 +32,22 @@ export class WebFileGetter {
     }
 
     const url = this.getFullPath(path)
-    const res = await fetch(url)
-    if (!res.ok) {
+
+    try {
+      const data = await promiseRetry(async (retry) => {
+        try {
+          return await fetchJson(url)
+        } catch (err) {
+          retry(err)
+        }
+      }, { retries: 3 })
+
+      this.cache[path] = data
+      return data
+    } catch (err) {
+      console.log(`Error getting ${path}:`, err)
       return null
     }
-
-    const data = await res.json()
-    if (!data) {
-      return null
-    }
-
-    this.cache[path] = data
-    return data
   }
 }
 
@@ -37,6 +55,10 @@ export class WebDataManager extends DataManager {
   constructor(webFileGetter: WebFileGetter) {
     super(webFileGetter)
   }
+
+  static fromPathPrefix (pathPrefix?: string) {
+    return new WebDataManager(new WebFileGetter(pathPrefix))
+  }
 }
 
-export default new WebDataManager(new WebFileGetter(PUBLIC_URL))
+export default WebDataManager.fromPathPrefix(process.env.PUBLIC_URL)

@@ -16,6 +16,8 @@
     "fs-extra": "^5.0.0",
     "moment": "^2.21.0",
     "nba": "^4.2.0",
+    "promise-retry": "^1.1.1",
+    "simple-statistics": "^5.2.1",
     "slugify": "^1.2.9"
   }
 }

@@ -1,4 +1,19 @@
-import { ShotType, Percent, ShotInfo, allShotTypes, BoxScoreStats, ShotSet } from './types'
+import { sum } from 'simple-statistics'
+import { ShotType, Percent, ShotInfo, allShotTypes, BoxScoreStats, NonDerivedBoxScoreStats, ShotSet } from './types'
+
+export interface EnhancedShootingStats {
+  freeThrowPercentage: number
+  rimPercentage: number
+  shortMidRangePercentage: number
+  longMidRangePercentage: number
+  twoPointPercentage: number
+  threePointPercentage: number
+  fieldGoalPercentage: number
+  effectiveFieldGoalPercentage: number
+  trueShootingPercentage: number
+}
+
+export type EnhancedShootingBoxScoreStats = NonDerivedBoxScoreStats & EnhancedShootingStats
 
 // inspired by https://www.cleaningtheglass.com/stats/guide/player_shooting_loc
 export function get2PTShotType(distance: number): ShotType | null {
@@ -84,7 +99,7 @@ export function calculateShootingDataFromShots(shots: ShotInfo[]) {
   return calculateShootingData(shotsToShotSet(shots))
 }
 
-export function calculateShootingDataFromBoxScoreStats(boxScore: BoxScoreStats) {
+export function calculateShootingDataFromBoxScoreStats(boxScore: NonDerivedBoxScoreStats) {
   const set = blankShotSet()
   set[ShotType.FreeThrow] = { made: boxScore.FTM, attempted: boxScore.FTA }
   set[ShotType.ThreePt] = { made: boxScore.FG3M, attempted: boxScore.FG3A }
@@ -93,7 +108,7 @@ export function calculateShootingDataFromBoxScoreStats(boxScore: BoxScoreStats) 
   return calculateShootingData(set)
 }
 
-export function calculateShootingData(shotSet: ShotSet) {
+export function calculateShootingData(shotSet: ShotSet): EnhancedShootingStats {
   const { made: freeThrowsMade, attempted: freeThrowsAttempted } = shotSet[ShotType.FreeThrow]
   const { made: threePointersMade, attempted: threePointersAttempted } = shotSet[ShotType.ThreePt]
   const { made: rimTwoPointersMade, attempted: rimTwoPointersAttempted } = shotSet[ShotType.Rim]
@@ -116,4 +131,22 @@ export function calculateShootingData(shotSet: ShotSet) {
     effectiveFieldGoalPercentage: calculateEffectiveFieldGoalPercentage(twoPointersMade, threePointersMade, fieldGoalsAttempted),
     trueShootingPercentage: calculateTrueShootingPercentage({ freeThrowsMade, freeThrowsAttempted, twoPointersMade, threePointersMade, fieldGoalsAttempted })
   }
+}
+
+export function combineBoxScoreStatsWithShootingData(boxScoreStats: BoxScoreStats[]): EnhancedShootingBoxScoreStats {
+  const sumk = (key: keyof BoxScoreStats) => sum(boxScoreStats.map(bs => bs[key]))
+
+  const sums: NonDerivedBoxScoreStats = {
+    MIN: sumk('MIN'), TO: sumk('TO'), PF: sumk('PF'),
+    FGM: sumk('FGM'), FGA: sumk('FGA'),
+    FG3M: sumk('FG3M'), FG3A: sumk('FG3A'),
+    FTM: sumk('FTM'), FTA: sumk('FTA'),
+    OREB: sumk('OREB'), DREB: sumk('DREB'), REB: sumk('REB'),
+    AST: sumk('AST'), STL: sumk('STL'), BLK: sumk('BLK'),
+    PTS: sumk('PTS'), PLUS_MINUS: sumk('PLUS_MINUS')
+  }
+
+  const shotData = calculateShootingDataFromBoxScoreStats(sums)
+
+  return { ...sums, ...shotData }
 }

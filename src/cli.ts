@@ -64,6 +64,10 @@ export async function saveGameLogs({ season }: CliOptions) {
 
 export async function saveBoxScores({ season }: CliOptions) {
   const gameLogs = await fsDataManager.loadGameLogs(season)
+  if (!gameLogs) {
+    return console.log('Error loading game logs...')
+  }
+
   const gameIds = new Set(gameLogs.map(g => g.GAME_ID))
 
   const boxScoresByTeam = new Map<TeamAbbreviation, BoxScore[]>()

@@ -42,22 +42,22 @@ export class DataManager {
     return await this.fileGetter.getPathData(this.getTeamSeasonPath(category, season, team))
   }
 
-  async loadGameLogs(season: Season): Promise<GameLog[]> {
+  async loadGameLogs(season: Season): Promise<GameLog[] | null> {
     return await this.loadSeasonData('game_logs', season)
   }
 
-  async loadTeamBoxScores(season: Season, team: TeamAbbreviation): Promise<BoxScore[]> {
+  async loadTeamBoxScores(season: Season, team: TeamAbbreviation): Promise<BoxScore[] | null> {
     return await this.loadTeamData('box_scores', season, team)
   }
 
   async loadTeamBoxScore(season: Season, team: TeamAbbreviation, gameId: string): Promise<BoxScore | null> {
-    const boxScores = await this.loadTeamBoxScores(season, team)
+    const boxScores = await this.loadTeamBoxScores(season, team) || []
     const boxScore = boxScores.find(b => b.game.GAME_ID === gameId)
     return boxScore || null
   }
 
   async loadPlayerBoxScores(playerId: string, season?: Season): Promise<PlayerBoxScores | null> {
-    const playerInfo = playerMap[playerId]
+    const playerInfo = playerMap.idMap[playerId]
     if (!playerInfo) {
       return null
     }
@@ -66,15 +66,17 @@ export class DataManager {
 
     const seasons = season ? [season] : boxScoreSeasons
     await Promise.all(seasons.map(async (season) => {
-      const teams = (playerInfo.teams[season] ? Object.keys(playerInfo.teams[season]) : []) as TeamAbbreviation[]
-      await Promise.all(teams.map(async (team) => {
+      const teams = playerInfo.teams[season] || []
+      await Promise.all(teams.map(async ({ team }) => {
         const boxScores = await this.loadTeamBoxScores(season, team)
-        boxScores.forEach(boxScore => {
-          const playerStats = boxScore.playerStats.find(ps => ps.PLAYER_ID === playerId)
-          if (playerStats) {
-            scores.push({ game: boxScore.game, stats: playerStats })
-          }
-        })
+        if (boxScores) {
+          boxScores.forEach(boxScore => {
+            const playerStats = boxScore.playerStats.find(ps => ps.PLAYER_ID === playerId)
+            if (playerStats) {
+              scores.push({ game: boxScore.game, stats: playerStats })
+            }
+          })
+        }
       }))
     }))
 

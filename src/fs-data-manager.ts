@@ -43,7 +43,7 @@ export class FsDataManager extends DataManager {
 
   async createTeamMap() {
     const teamMap: TeamMap = {}
-    const gameLogs = await this.loadGameLogs('2017-18')
+    const gameLogs = await this.loadGameLogs('2017-18') || []
     gameLogs.forEach((gl: any) => {
       if (!teamMap[gl.TEAM_ABBREVIATION]) {
         teamMap[gl.TEAM_ABBREVIATION] = {
@@ -68,7 +68,7 @@ export class FsDataManager extends DataManager {
     // Create ID Map
     await Promise.all(boxScoreSeasons.map(async (season: Season) => {
       await Promise.all(allTeams.map(async (team) => {
-        const boxScores = await this.loadTeamBoxScores(season, team)
+        const boxScores = await this.loadTeamBoxScores(season, team) || []
         boxScores.forEach(boxScore => { // we leverage that this is a sorted array!
           boxScore.playerStats.forEach(playerStats => {
             const { PLAYER_ID, PLAYER_NAME, START_POSITION } = playerStats
@@ -126,7 +126,7 @@ export class FsDataManager extends DataManager {
     const gameIdMap: GameIdMap = {}
 
     await Promise.all(gameLogSeasons.map(async (season) => {
-      const gameLogs = await this.loadGameLogs(season)
+      const gameLogs = await this.loadGameLogs(season) || []
       gameLogs.forEach(log => {
         const { GAME_ID: id, HOME, OUTCOME, TEAM_ABBREVIATION, OPPONENT_TEAM_ABBREVIATION } = log
         if (!gameIdMap[id]) {
