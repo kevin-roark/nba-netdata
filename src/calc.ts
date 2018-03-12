@@ -1,5 +1,6 @@
-import { sum } from 'simple-statistics'
-import { ShotType, Percent, ShotInfo, allShotTypes, BoxScoreStats, NonDerivedBoxScoreStats, ShotSet } from './types'
+import { sum, standardDeviation } from 'simple-statistics'
+import { ShotType, Percent, ShotInfo, allShotTypes, NonDerivedBoxScoreStats, ShotSet } from './types'
+import { mapObjects } from './util'
 
 export interface EnhancedShootingStats {
   freeThrowPercentage: number
@@ -14,6 +15,8 @@ export interface EnhancedShootingStats {
 }
 
 export type EnhancedShootingBoxScoreStats = NonDerivedBoxScoreStats & EnhancedShootingStats
+
+export type NumberMapper = (numbers: number[]) => number
 
 // inspired by https://www.cleaningtheglass.com/stats/guide/player_shooting_loc
 export function get2PTShotType(distance: number): ShotType | null {
@@ -46,31 +49,35 @@ export function getShotTypePointValue(shotType: ShotType): number {
   }
 }
 
-export function calculateShotPercentage(makes: number, attempts: number): Percent {
-  return attempts === 0 ? 0 : makes / attempts
+export function calcShotPercentage(makes: number, attempts: number): Percent {
+  return attempts ? makes / attempts : NaN
 }
 
-export function calculateEffectiveFieldGoalPercentage(twoPointersMade: number, threePointersMade: number, attempts: number): Percent {
-  if (attempts === 0) {
-    return 0
+export function calcEffectiveFieldGoalPercentage(twoPointersMade: number, threePointersMade: number, attempts: number): Percent {
+  if (!attempts) {
+    return NaN
   }
 
   const fieldGoalsMade = twoPointersMade + threePointersMade
   return (fieldGoalsMade + 0.5 * threePointersMade) / attempts
 }
 
-export function calculateTrueShootingAttempts(fieldGoalsAttempted: number, freeThrowsAttempted: number): number {
+export function calcTrueShootingAttempts(fieldGoalsAttempted: number, freeThrowsAttempted: number): number {
   return fieldGoalsAttempted + 0.44 * freeThrowsAttempted
 }
 
-export function calculateTrueShootingPercentage(data: {
+export function calcTrueShootingPercentage(data: {
   freeThrowsMade: number,
   freeThrowsAttempted: number,
   twoPointersMade: number,
   threePointersMade: number,
   fieldGoalsAttempted: number
 }): Percent {
-  const tsa = calculateTrueShootingAttempts(data.fieldGoalsAttempted, data.freeThrowsAttempted)
+  const tsa = calcTrueShootingAttempts(data.fieldGoalsAttempted, data.freeThrowsAttempted)
+  if (!tsa) {
+    return NaN
+  }
+
   const points = data.freeThrowsMade + data.twoPointersMade * 2 + data.threePointersMade * 3
   return points / (2 * tsa)
 }
@@ -95,20 +102,21 @@ export function shotsToShotSet(shots: ShotInfo[]): ShotSet {
   return set
 }
 
-export function calculateShootingDataFromShots(shots: ShotInfo[]) {
-  return calculateShootingData(shotsToShotSet(shots))
+export function calcShootingDataFromShots(shots: ShotInfo[]) {
+  return calcShootingData(shotsToShotSet(shots))
 }
 
-export function calculateShootingDataFromBoxScoreStats(boxScore: NonDerivedBoxScoreStats) {
+export function calcShootingDataFromBoxScoreStats(boxScore: NonDerivedBoxScoreStats): EnhancedShootingBoxScoreStats {
   const set = blankShotSet()
   set[ShotType.FreeThrow] = { made: boxScore.FTM, attempted: boxScore.FTA }
   set[ShotType.ThreePt] = { made: boxScore.FG3M, attempted: boxScore.FG3A }
   set[ShotType.UnknownTwoPt] = { made: boxScore.FGM - boxScore.FG3M, attempted: boxScore.FGA - boxScore.FG3A }
 
-  return calculateShootingData(set)
+  const enhancedStats = calcShootingData(set)
+  return { ...boxScore, ...enhancedStats }
 }
 
-export function calculateShootingData(shotSet: ShotSet): EnhancedShootingStats {
+export function calcShootingData(shotSet: ShotSet): EnhancedShootingStats {
   const { made: freeThrowsMade, attempted: freeThrowsAttempted } = shotSet[ShotType.FreeThrow]
   const { made: threePointersMade, attempted: threePointersAttempted } = shotSet[ShotType.ThreePt]
   const { made: rimTwoPointersMade, attempted: rimTwoPointersAttempted } = shotSet[ShotType.Rim]
@@ -121,32 +129,44 @@ export function calculateShootingData(shotSet: ShotSet): EnhancedShootingStats {
   const fieldGoalsAttempted = twoPointersAttempted + threePointersAttempted
 
   return {
-    freeThrowPercentage: calculateShotPercentage(freeThrowsMade, freeThrowsAttempted),
-    rimPercentage: calculateShotPercentage(rimTwoPointersMade, rimTwoPointersAttempted),
-    shortMidRangePercentage: calculateShotPercentage(shortTwoPointersMade, shortTwoPointersAttempted),
-    longMidRangePercentage: calculateShotPercentage(longTwoPointersMade, longTwoPointersAttempted),
-    twoPointPercentage: calculateShotPercentage(twoPointersMade, twoPointersAttempted),
-    threePointPercentage: calculateShotPercentage(threePointersMade, threePointersAttempted),
-    fieldGoalPercentage: calculateShotPercentage(fieldGoalsMade, fieldGoalsAttempted),
-    effectiveFieldGoalPercentage: calculateEffectiveFieldGoalPercentage(twoPointersMade, threePointersMade, fieldGoalsAttempted),
-    trueShootingPercentage: calculateTrueShootingPercentage({ freeThrowsMade, freeThrowsAttempted, twoPointersMade, threePointersMade, fieldGoalsAttempted })
+    freeThrowPercentage: calcShotPercentage(freeThrowsMade, freeThrowsAttempted),
+    rimPercentage: calcShotPercentage(rimTwoPointersMade, rimTwoPointersAttempted),
+    shortMidRangePercentage: calcShotPercentage(shortTwoPointersMade, shortTwoPointersAttempted),
+    longMidRangePercentage: calcShotPercentage(longTwoPointersMade, longTwoPointersAttempted),
+    twoPointPercentage: calcShotPercentage(twoPointersMade, twoPointersAttempted),
+    threePointPercentage: calcShotPercentage(threePointersMade, threePointersAttempted),
+    fieldGoalPercentage: calcShotPercentage(fieldGoalsMade, fieldGoalsAttempted),
+    effectiveFieldGoalPercentage: calcEffectiveFieldGoalPercentage(twoPointersMade, threePointersMade, fieldGoalsAttempted),
+    trueShootingPercentage: calcTrueShootingPercentage({ freeThrowsMade, freeThrowsAttempted, twoPointersMade, threePointersMade, fieldGoalsAttempted })
   }
 }
 
-export function combineBoxScoreStatsWithShootingData(boxScoreStats: BoxScoreStats[]): EnhancedShootingBoxScoreStats {
-  const sumk = (key: keyof BoxScoreStats) => sum(boxScoreStats.map(bs => bs[key]))
+const nanFilteredStdDev = nanFilter(standardDeviation)
 
-  const sums: NonDerivedBoxScoreStats = {
-    MIN: sumk('MIN'), TO: sumk('TO'), PF: sumk('PF'),
-    FGM: sumk('FGM'), FGA: sumk('FGA'),
-    FG3M: sumk('FG3M'), FG3A: sumk('FG3A'),
-    FTM: sumk('FTM'), FTA: sumk('FTA'),
-    OREB: sumk('OREB'), DREB: sumk('DREB'), REB: sumk('REB'),
-    AST: sumk('AST'), STL: sumk('STL'), BLK: sumk('BLK'),
-    PTS: sumk('PTS'), PLUS_MINUS: sumk('PLUS_MINUS')
+export const combineBoxScoreStatsWithShootingData = (stats: NonDerivedBoxScoreStats[]): EnhancedShootingBoxScoreStats =>
+  calcShootingDataFromBoxScoreStats(mapBoxScoreStats(stats, sum))
+
+export const getEnhancedShootingStatsStdDev = (stats: EnhancedShootingStats[]) => mapEnhancedShootingStats(stats, nanFilteredStdDev)
+export const getEnhancedShootingBoxScoreStatsStdDev = (stats: EnhancedShootingBoxScoreStats[]) => mapEnhancedShootingBoxScoreStats(stats, nanFilteredStdDev)
+
+export const mapEnhancedShootingStats = (stats: EnhancedShootingStats[], mapper: NumberMapper): EnhancedShootingStats =>
+  mapObjects(stats, (s, k) => mapper(s.map(stat => stat[k])),
+    'freeThrowPercentage', 'rimPercentage', 'shortMidRangePercentage', 'longMidRangePercentage', 'twoPointPercentage', 'threePointPercentage', 'fieldGoalPercentage', 'effectiveFieldGoalPercentage', 'trueShootingPercentage'
+  )
+
+export const mapBoxScoreStats = (boxScoreStats: NonDerivedBoxScoreStats[], mapper: NumberMapper): NonDerivedBoxScoreStats =>
+  mapObjects(boxScoreStats, (bss, k) => mapper(bss.map(bs => bs[k])),
+    'MIN', 'TO', 'PF', 'FGM', 'FGA', 'FG3M', 'FG3A', 'FTM', 'FTA', 'OREB', 'DREB', 'REB', 'AST', 'STL', 'BLK', 'PTS', 'PLUS_MINUS',
+  )
+
+export const mapEnhancedShootingBoxScoreStats = (boxScoreStats: EnhancedShootingBoxScoreStats[], mapper: NumberMapper): EnhancedShootingBoxScoreStats => ({
+  ...mapEnhancedShootingStats(boxScoreStats, mapper),
+  ...mapBoxScoreStats(boxScoreStats, mapper)
+})
+
+function nanFilter(mapper: NumberMapper): NumberMapper {
+  return (numbers: number[]) => {
+    const cleanNumbers = numbers.filter(n => !isNaN(n))
+    return cleanNumbers.length > 0 ? mapper(cleanNumbers) : NaN
   }
-
-  const shotData = calculateShootingDataFromBoxScoreStats(sums)
-
-  return { ...sums, ...shotData }
 }

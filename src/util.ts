@@ -8,6 +8,22 @@ export function pick<T, K extends keyof T>(obj: T, ...keys: K[]): Pick<T, K> {
   return ret
 }
 
+export function mapObject<T, K extends keyof T> (obj: T, mapper: (t: T, k: K) => T[K], ...keys: K[]): Pick<T, K> {
+  const mapped: any = {}
+  keys.forEach(key => {
+    mapped[key] = mapper(obj, key)
+  })
+  return mapped as Pick<T, K>
+}
+
+export function mapObjects<T, K extends keyof T> (objs: T[], mapper: (ts: T[], k: K) => T[K], ...keys: K[]): Pick<T, K> {
+  const mapped: any = {}
+  keys.forEach(key => {
+    mapped[key] = mapper(objs, key)
+  })
+  return mapped as Pick<T, K>
+}
+
 export const delay = (t: number) => new Promise(resolve => setTimeout(resolve, t))
 
 // assumes player's name will be in all caps...
