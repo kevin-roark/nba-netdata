@@ -68,7 +68,7 @@ export async function saveBoxScores({ season }: CliOptions) {
     return console.log('Error loading game logs...')
   }
 
-  const gameIds = new Set(gameLogs.map(g => g.GAME_ID))
+  const gameIds = Array.from(new Set(gameLogs.map(g => g.GAME_ID)))
 
   const boxScoresByTeam = new Map<TeamAbbreviation, BoxScore[]>()
   for (const GameID of gameIds) {
@@ -84,7 +84,7 @@ export async function saveBoxScores({ season }: CliOptions) {
     await delay(500)
   }
 
-  for (const [team, boxScores] of boxScoresByTeam) {
+  for (const [team, boxScores] of Array.from(boxScoresByTeam.entries())) {
     const filename = await fsDataManager.saveTeamBoxScores(boxScores, season, team)
     console.log(`Saved ${team} to ${filename}`)
   }

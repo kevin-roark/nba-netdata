@@ -1,4 +1,4 @@
-import promiseRetry from 'promise-retry'
+import * as promiseRetry from 'promise-retry'
 import { DataManager } from './data-manager'
 
 async function fetchJson(url: string) {
