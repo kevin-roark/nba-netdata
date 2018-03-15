@@ -56,7 +56,7 @@ export class DataManager {
     return boxScore || null
   }
 
-  async loadPlayerBoxScores(playerId: string, season?: Season): Promise<PlayerBoxScores | null> {
+  async loadPlayerBoxScores(playerId: string, season?: Season | null): Promise<PlayerBoxScores | null> {
     const playerInfo = playerMap.idMap[playerId]
     if (!playerInfo) {
       return null
@@ -79,6 +79,8 @@ export class DataManager {
         }
       }))
     }))
+
+    scores.sort((a, b) => a.game.GAME_DATE.localeCompare(b.game.GAME_DATE))
 
     return { player: playerInfo, scores }
   }

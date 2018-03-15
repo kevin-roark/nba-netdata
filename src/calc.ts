@@ -197,3 +197,8 @@ export function getStatsDiff<T> (stats1: T, stats2: T): T {
   const diff = mapObject(stats1, mapper, ...keys)
   return diff as any
 }
+
+export function mapStatsToString<T, K extends keyof T> (stats: T, mapper: (t: T, k: K) => string): {[key: string]: string} {
+  const keys = Object.keys(stats) as any
+  return mapObject(stats, mapper as any, ...keys) as any
+}

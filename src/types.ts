@@ -92,6 +92,11 @@ export interface GameInfo {
   winner: TeamAbbreviation
 }
 
+export interface SeasonInfo {
+  startDate: string,
+  endDate: string
+}
+
 export interface NBAStatsResultSet {
   name: string,
   headers: string[],
@@ -180,6 +185,7 @@ export interface PlayerMap {
   simpleIds: { [simpleId: string]: string }
 }
 export type GameIdMap = {[id: string]: GameInfo }
+export type SeasonMap = {[season: string]: SeasonInfo }
 
 export type Period = 1 | 2 | 3 | 4
 

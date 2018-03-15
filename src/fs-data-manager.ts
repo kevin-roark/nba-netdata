@@ -25,8 +25,15 @@ export class FsDataManager extends DataManager {
     super(new FsFileGetter())
   }
 
+  async writeJSON(path: string, data: any) {
+    const filename = this.fileGetter.getFullPath(path)
+    await fs.ensureFile(filename)
+    await fs.writeJson(filename, data)
+    return filename
+  }
+
   async saveSeasonData(data: any, category: DataCategory, season: Season) {
-    return writeJSON(this.getSeasonPath(category, season), data)
+    return await this.writeJSON(this.getSeasonPath(category, season), data)
   }
 
   async saveGameLogs(gameLogs: GameLog[], season: Season) {
@@ -34,7 +41,7 @@ export class FsDataManager extends DataManager {
   }
 
   async saveTeamSeasonData(data: any, category: DataCategory, season: Season, team: TeamAbbreviation) {
-    return writeJSON(this.getTeamSeasonPath(category, season, team), data)
+    return await this.writeJSON(this.getTeamSeasonPath(category, season, team), data)
   }
 
   async saveTeamBoxScores(boxScores: BoxScore[], season: Season, team: TeamAbbreviation) {
@@ -54,7 +61,7 @@ export class FsDataManager extends DataManager {
       }
     })
 
-    await writeJSON(join(dataDirectory, 'team_map.json'), teamMap)
+    await this.writeJSON('team_map.json', teamMap)
   }
 
   async createPlayerMap() {
@@ -119,7 +126,7 @@ export class FsDataManager extends DataManager {
       })
     })
 
-    await writeJSON(join(dataDirectory, 'player_map.json'), playerMap)
+    await this.writeJSON('player_map.json', playerMap)
   }
 
   async createGameIdMap() {
@@ -138,14 +145,8 @@ export class FsDataManager extends DataManager {
       })
     }))
 
-    await writeJSON(join(dataDirectory, 'game_id_map.json'), gameIdMap)
+    await this.writeJSON('game_id_map.json', gameIdMap)
   }
-}
-
-async function writeJSON(filename: string, data: any) {
-  await fs.ensureFile(filename)
-  await fs.writeJson(filename, data)
-  return filename
 }
 
 export default new FsDataManager()

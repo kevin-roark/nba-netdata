@@ -1,13 +1,14 @@
-import { Season, TeamAbbreviation, TeamMap, PlayerMap, GameIdMap, PlayerInfo, TeamInfo } from './types'
+import { Season, TeamAbbreviation, TeamMap, PlayerMap, GameIdMap, SeasonMap, PlayerInfo, TeamInfo, SeasonInfo } from './types'
 
 export const teamMap: TeamMap = require('../data/team_map.json')
 export const playerMap: PlayerMap = require('../data/player_map.json')
 export const gameIdMap: GameIdMap = require('../data/game_id_map.json')
+export const seasonMap: SeasonMap = require('../data/season_map.json')
 
 export const allTeams = Object.keys(teamMap) as TeamAbbreviation[]
 
 export const gameLogSeasons: Season[] = ['2017-18', '2016-17']
-export const boxScoreSeasons: Season[] = ['2017-18']
+export const boxScoreSeasons: Season[] = ['2017-18', '2016-17']
 
 export function getTeamsInfo(): TeamInfo[] {
   return Object.keys(teamMap).map(k => teamMap[k]).sort((a, b) => a.abbreviation.localeCompare(b.abbreviation))
@@ -30,4 +31,8 @@ export function getPlayerWithSimpleId(simpleId: string): PlayerInfo | null {
 
   const player = playerMap.idMap[nbaId]
   return player || null
+}
+
+export function getSeasonInfo (season: Season): SeasonInfo {
+  return seasonMap[season]
 }
