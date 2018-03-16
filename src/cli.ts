@@ -17,7 +17,8 @@ const functionMap: { [key: string]: (options: CliOptions) => any } = {
   saveGameLogs,
   saveBoxScores,
   saveLatestData,
-  createPlayerMap
+  createPlayerMap,
+  createGameIdMap
 }
 
 program
@@ -99,4 +100,8 @@ export async function saveLatestData(options: CliOptions) {
 
 async function createPlayerMap() {
   await fsDataManager.createPlayerMap()
+}
+
+async function createGameIdMap() {
+  await fsDataManager.createGameIdMap()
 }

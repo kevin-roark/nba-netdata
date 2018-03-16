@@ -49,12 +49,14 @@ export enum ShotType {
   Rim = 'rim',
   ShortMidRange = 'shortMidRange',
   LongMidRange = 'longMidRange',
-  UnknownTwoPt = 'unknwonTwoPt',
+  GenericTwoPt = 'genericTwoPt',
   ThreePt = 'three',
-  FreeThrow = 'freeThrow'
+  FreeThrow = 'freeThrow',
 }
 
-export const allShotTypes = [ShotType.Rim, ShotType.ShortMidRange, ShotType.LongMidRange, ShotType.UnknownTwoPt, ShotType.ThreePt, ShotType.FreeThrow]
+export const FieldGoal = 'fieldGoal'
+
+export const allShotTypes = [ShotType.Rim, ShotType.ShortMidRange, ShotType.LongMidRange, ShotType.GenericTwoPt, ShotType.ThreePt, ShotType.FreeThrow]
 
 export enum FoulType {
   Shooting = 'shooting',
@@ -86,6 +88,7 @@ export interface PlayerInfo {
 
 export interface GameInfo {
   id: string,
+  players: {[playerId: string]: true},
   season: Season,
   home: TeamAbbreviation,
   away: TeamAbbreviation,

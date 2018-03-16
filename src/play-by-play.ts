@@ -4,6 +4,7 @@ import { pick, findPlayerInText } from './util'
 import { get2PTShotType, getShotTypePointValue } from './calc'
 
 const SecondsPerPeriod = 12 * 60
+const SecondsPerOT = 5 * 60
 
 // informed by http://projects.rajivshah.com/sportvu/PBP_NBA_SportVu.html
 export enum NBAPlayByPlayEventMessageType {
@@ -196,7 +197,14 @@ export function getPlayByPlayDataPoint(boxScores: CompleteGameBoxScores, points:
   const actualTime = moment(`${boxScores.home.score.game.GAME_DATE} ${data.wctimestring}`, 'YYYY-MM-DD H:mm A')
   const [periodMinutes, periodSeconds] = data.pctimestring.split(':')
   const periodSecondsRemaining = 60 * Number(periodMinutes) + Number(periodSeconds)
-  const secondsIntoGame = (data.period - 1) * SecondsPerPeriod + (SecondsPerPeriod - periodSecondsRemaining)
+
+  const currentPeriodTotalSeconds = data.period > 4 ? SecondsPerOT : SecondsPerPeriod
+  let secondsIntoGame: number
+  if (data.period > 4) {
+    secondsIntoGame = 4 * SecondsPerPeriod + (data.period - 1 - 4) * SecondsPerOT + (currentPeriodTotalSeconds - periodSecondsRemaining)
+  } else {
+    secondsIntoGame = (data.period - 1) * SecondsPerPeriod + (currentPeriodTotalSeconds - periodSecondsRemaining)
+  }
 
   // not every event includes score so sometimes we need to go back in time
   let awayScore = 0

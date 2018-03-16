@@ -145,6 +145,6 @@ export class DataManager {
 function getPlayersFromBoxScore(boxScore: BoxScore): PlayerInfo[] {
   return boxScore.playerStats
     .filter(p => p.MIN > 0)
-    .map(p => playerMap[p.PLAYER_ID])
+    .map(p => playerMap.idMap[p.PLAYER_ID])
     .filter(p => !!p)
 }

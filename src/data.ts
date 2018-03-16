@@ -33,6 +33,12 @@ export function getPlayerWithSimpleId(simpleId: string): PlayerInfo | null {
   return player || null
 }
 
-export function getSeasonInfo (season: Season): SeasonInfo {
+export function getSeasonInfo(season: Season): SeasonInfo {
   return seasonMap[season]
+}
+
+export function getPlayerGameIds(playerId: string): string[] {
+  return Object.keys(gameIdMap).filter(gameId => {
+    return gameIdMap[gameId].players[playerId]
+  })
 }

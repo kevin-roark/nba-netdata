@@ -132,17 +132,23 @@ export class FsDataManager extends DataManager {
   async createGameIdMap() {
     const gameIdMap: GameIdMap = {}
 
-    await Promise.all(gameLogSeasons.map(async (season) => {
+    await Promise.all(boxScoreSeasons.map(async (season) => {
       const gameLogs = await this.loadGameLogs(season) || []
-      gameLogs.forEach(log => {
-        const { GAME_ID: id, HOME, OUTCOME, TEAM_ABBREVIATION, OPPONENT_TEAM_ABBREVIATION } = log
+      await Promise.all(gameLogs.map(async (game) => {
+        const { GAME_ID: id, HOME, OUTCOME, TEAM_ABBREVIATION, OPPONENT_TEAM_ABBREVIATION } = game
         if (!gameIdMap[id]) {
           const home = HOME ? TEAM_ABBREVIATION : OPPONENT_TEAM_ABBREVIATION
           const away = HOME ? OPPONENT_TEAM_ABBREVIATION : TEAM_ABBREVIATION
           const winner = OUTCOME === GameOutcome.Win ? TEAM_ABBREVIATION : OPPONENT_TEAM_ABBREVIATION
-          gameIdMap[id] = { id, season, home, away, winner }
+
+          const boxScores = (await this.loadGameBoxScores(game.GAME_ID))!
+          const players: {[playerId: string]: true} = {}
+          boxScores.home.players.concat(boxScores.away.players).forEach(p => players[p.id] = true)
+
+          gameIdMap[id] = { id, season, home, away, winner, players }
         }
-      })
+
+      }))
     }))
 
     await this.writeJSON('game_id_map.json', gameIdMap)

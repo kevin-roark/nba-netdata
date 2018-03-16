@@ -1,5 +1,7 @@
 import { sum, standardDeviation, interquartileRange } from 'simple-statistics'
-import { ShotType, Percent, ShotInfo, allShotTypes, NonDerivedBoxScoreStats, ShotSet } from './types'
+import * as moment from 'moment'
+import { Moment } from 'moment'
+import { FieldGoal, ShotType, Percent, ShotInfo, allShotTypes, NonDerivedBoxScoreStats, ShotSet, BoxScore, GameLog, GameStats } from './types'
 import { mapObjects, mapObject } from './util'
 
 export interface EnhancedShootingStats {
@@ -15,10 +17,16 @@ export interface EnhancedShootingStats {
 }
 
 export type EnhancedShootingBoxScoreStats = NonDerivedBoxScoreStats & EnhancedShootingStats
+export interface EnhancedGameStats {
+  game: GameLog & { date: Moment },
+  stats: EnhancedShootingBoxScoreStats,
+}
+export interface EnhancedTeamGameStats extends EnhancedGameStats {
+  playerStats: EnhancedShootingBoxScoreStats[]
+}
+export type ShootingStat = keyof EnhancedShootingStats
 
 export type NumberMapper = (numbers: number[]) => number
-
-export type ShootingStat = keyof EnhancedShootingStats
 
 // inspired by https://www.cleaningtheglass.com/stats/guide/player_shooting_loc
 export function get2PTShotType(distance: number): ShotType | null {
@@ -44,11 +52,68 @@ export function getShotTypePointValue(shotType: ShotType): number {
     case ShotType.Rim:
     case ShotType.ShortMidRange:
     case ShotType.LongMidRange:
-    case ShotType.UnknownTwoPt:
+    case ShotType.GenericTwoPt:
       return 2
     case ShotType.ThreePt:
       return 3
   }
+}
+
+// from https://www.basketball-reference.com/leagues/NBA_stats.html,
+// https://stats.nba.com/teams/shots-general/?sort=FG2_PCT&dir=1, https://www.cleaningtheglass.com/stats/league/shots
+const averageShootingPercentages = {
+  fieldGoalPercentage: 0.461,
+  twoPointPercentage: 0.556,
+  threePointPercentage: 0.362,
+  freeThrowPercentage: 0.769,
+  rimPercentage: 0.634,
+  shortMidRangePercentage: 0.394,
+  longMidRangePercentage: 0.404,
+  effectiveFieldGoalPercentage: 0.522,
+}
+
+export function getShotPercentAverage(type: string) {
+  const average = averageShootingPercentages[type] || averageShootingPercentages[shotTypeToShootingStat(type as any)] || 0.5
+  return average
+}
+
+export function getParentShotType(shotType: ShotType): ShotType | null {
+  switch (shotType) {
+    case ShotType.Rim:
+    case ShotType.ShortMidRange:
+    case ShotType.LongMidRange:
+      return ShotType.GenericTwoPt
+
+    case ShotType.FreeThrow:
+    case ShotType.ThreePt:
+    case ShotType.FreeThrow:
+    case ShotType.GenericTwoPt:
+      return null
+  }
+}
+
+export function shotTypeToShootingStat(type: ShotType | 'fieldGoal'): ShootingStat {
+  switch (type) {
+    case ShotType.FreeThrow:
+      return 'freeThrowPercentage'
+    case ShotType.LongMidRange:
+      return 'longMidRangePercentage'
+    case ShotType.Rim:
+      return 'rimPercentage'
+    case ShotType.ShortMidRange:
+      return 'shortMidRangePercentage'
+    case ShotType.ThreePt:
+      return 'threePointPercentage'
+    case ShotType.GenericTwoPt:
+      return 'twoPointPercentage'
+    case FieldGoal:
+    default:
+      return 'fieldGoalPercentage'
+  }
+}
+
+export function isShotTypeFieldGoal(shotType: ShotType): boolean {
+  return shotType !== ShotType.FreeThrow
 }
 
 export function calcShotPercentage(makes: number, attempts: number): Percent {
@@ -93,7 +158,7 @@ export function calcTrueShootingPercentage(data: {
 }
 
 const blankShotSet = () => {
-  const set: ShotSet = {}
+  const set: ShotSet = { [FieldGoal]: { made: 0, attempted: 0 }}
   allShotTypes.forEach(type => {
     set[type] = { made: 0, attempted: 0 }
   })
@@ -103,27 +168,13 @@ const blankShotSet = () => {
 export function shotsToShotSet(shots: ShotInfo[]): ShotSet {
   const set = blankShotSet()
   shots.forEach(({ shotType, miss }) => {
-    shots[shotType].attempted += 1
+    set[shotType].attempted += 1
     if (!miss) {
-      shots[shotType].made += 1
+      set[shotType].made += 1
     }
   })
 
   return set
-}
-
-export function calcShootingDataFromShots(shots: ShotInfo[]) {
-  return calcShootingData(shotsToShotSet(shots))
-}
-
-export function calcShootingDataFromBoxScoreStats(boxScore: NonDerivedBoxScoreStats): EnhancedShootingBoxScoreStats {
-  const set = blankShotSet()
-  set[ShotType.FreeThrow] = { made: boxScore.FTM, attempted: boxScore.FTA }
-  set[ShotType.ThreePt] = { made: boxScore.FG3M, attempted: boxScore.FG3A }
-  set[ShotType.UnknownTwoPt] = { made: boxScore.FGM - boxScore.FG3M, attempted: boxScore.FGA - boxScore.FG3A }
-
-  const enhancedStats = calcShootingData(set)
-  return { ...boxScore, ...enhancedStats }
 }
 
 export function calcShootingData(shotSet: ShotSet): EnhancedShootingStats {
@@ -132,9 +183,9 @@ export function calcShootingData(shotSet: ShotSet): EnhancedShootingStats {
   const { made: rimMade, attempted: rimAttempted } = shotSet[ShotType.Rim]
   const { made: shortMidRangeMade, attempted: shortMidRangeAttempted } = shotSet[ShotType.ShortMidRange]
   const { made: longMidRangeMade, attempted: longMidRangeAttempted } = shotSet[ShotType.LongMidRange]
-  const { made: unknownTwoPointersMade, attempted: unknownTwoPointersAttempted } = shotSet[ShotType.UnknownTwoPt]
-  const twoPointersMade = rimMade + shortMidRangeMade + longMidRangeMade + unknownTwoPointersMade
-  const twoPointersAttempted = rimAttempted + shortMidRangeAttempted + longMidRangeAttempted + unknownTwoPointersAttempted
+  const { made: genericTwoPointersMade, attempted: genericTwoPointersAttempted } = shotSet[ShotType.GenericTwoPt]
+  const twoPointersMade = rimMade + shortMidRangeMade + longMidRangeMade + genericTwoPointersMade
+  const twoPointersAttempted = rimAttempted + shortMidRangeAttempted + longMidRangeAttempted + genericTwoPointersAttempted
   const fieldGoalsMade = twoPointersMade + threePointersMade
   const fieldGoalsAttempted = twoPointersAttempted + threePointersAttempted
 
@@ -151,8 +202,37 @@ export function calcShootingData(shotSet: ShotSet): EnhancedShootingStats {
   }
 }
 
+export function calcShootingDataFromShots(shots: ShotInfo[]) {
+  return calcShootingData(shotsToShotSet(shots))
+}
+
+export function calcShootingDataFromBoxScoreStats(boxScore: NonDerivedBoxScoreStats): EnhancedShootingBoxScoreStats {
+  const set = blankShotSet()
+  set[ShotType.FreeThrow] = { made: boxScore.FTM, attempted: boxScore.FTA }
+  set[ShotType.ThreePt] = { made: boxScore.FG3M, attempted: boxScore.FG3A }
+  set[ShotType.GenericTwoPt] = { made: boxScore.FGM - boxScore.FG3M, attempted: boxScore.FGA - boxScore.FG3A }
+
+  const enhancedStats = calcShootingData(set)
+  return { ...boxScore, ...enhancedStats }
+}
+
 export const combineBoxScoreStatsWithShootingData = (stats: NonDerivedBoxScoreStats[]): EnhancedShootingBoxScoreStats =>
   calcShootingDataFromBoxScoreStats(mapBoxScoreStats(stats, sum))
+
+export function calcEnhancedGameStats(gs: GameStats): EnhancedGameStats {
+  return {
+    stats: calcShootingDataFromBoxScoreStats(gs.stats),
+    game: { ...gs.game, date: moment(gs.game.GAME_DATE) }
+  }
+}
+
+export function calcEnhancedTeamGameStats(boxScore: BoxScore): EnhancedTeamGameStats {
+  return {
+    playerStats: boxScore.playerStats.map(calcShootingDataFromBoxScoreStats),
+    stats: combineBoxScoreStatsWithShootingData(boxScore.playerStats),
+    game: { ...boxScore.game, date: moment(boxScore.game.GAME_DATE) }
+  }
+}
 
 export const mapEnhancedShootingStats = (stats: EnhancedShootingStats[], mapper: NumberMapper): EnhancedShootingStats =>
   mapObjects(stats, (s, k) => mapper(s.map(stat => stat[k])),
