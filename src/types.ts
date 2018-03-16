@@ -88,10 +88,13 @@ export interface PlayerInfo {
 
 export interface GameInfo {
   id: string,
+  date: string,
   players: {[playerId: string]: true},
   season: Season,
   home: TeamAbbreviation,
+  homePoints: number,
   away: TeamAbbreviation,
+  awayPoints: number,
   winner: TeamAbbreviation
 }
 

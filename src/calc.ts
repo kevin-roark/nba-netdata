@@ -190,7 +190,7 @@ export function calcShootingData(shotSet: ShotSet): EnhancedShootingStats {
   const fieldGoalsMade = twoPointersMade + threePointersMade
   const fieldGoalsAttempted = twoPointersAttempted + threePointersAttempted
 
-  const points = freeThrowsMade + twoPointersMade + threePointersMade
+  const points = freeThrowsMade + twoPointersMade * 2 + threePointersMade * 3
 
   return {
     points,

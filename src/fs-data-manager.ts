@@ -135,7 +135,7 @@ export class FsDataManager extends DataManager {
     await Promise.all(boxScoreSeasons.map(async (season) => {
       const gameLogs = await this.loadGameLogs(season) || []
       await Promise.all(gameLogs.map(async (game) => {
-        const { GAME_ID: id, HOME, OUTCOME, TEAM_ABBREVIATION, OPPONENT_TEAM_ABBREVIATION } = game
+        const { GAME_ID: id, GAME_DATE: date, HOME, OUTCOME, TEAM_ABBREVIATION, OPPONENT_TEAM_ABBREVIATION } = game
         if (!gameIdMap[id]) {
           const home = HOME ? TEAM_ABBREVIATION : OPPONENT_TEAM_ABBREVIATION
           const away = HOME ? OPPONENT_TEAM_ABBREVIATION : TEAM_ABBREVIATION
@@ -144,10 +144,11 @@ export class FsDataManager extends DataManager {
           const boxScores = (await this.loadGameBoxScores(game.GAME_ID))!
           const players: {[playerId: string]: true} = {}
           boxScores.home.players.concat(boxScores.away.players).forEach(p => players[p.id] = true)
+          const homePoints = boxScores.home.score.game.stats.PTS
+          const awayPoints = boxScores.away.score.game.stats.PTS
 
-          gameIdMap[id] = { id, season, home, away, winner, players }
+          gameIdMap[id] = { id, date, season, home, homePoints, away, awayPoints, winner, players }
         }
-
       }))
     }))
 
