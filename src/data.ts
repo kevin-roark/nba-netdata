@@ -23,14 +23,18 @@ export function getPlayersInfo(): PlayerInfo[] {
   return Object.keys(playerIdMap).map(k => playerIdMap[k]).sort((a, b) => a.simpleId.localeCompare(b.simpleId))
 }
 
+export function getPlayerWithId(id: string) {
+  const player = playerMap.idMap[id]
+  return player || null
+}
+
 export function getPlayerWithSimpleId(simpleId: string): PlayerInfo | null {
   const nbaId = playerMap.simpleIds[simpleId]
   if (!nbaId) {
     return null
   }
 
-  const player = playerMap.idMap[nbaId]
-  return player || null
+  return nbaId ? getPlayerWithId(nbaId) : null
 }
 
 export function getSeasonInfo(season: Season): SeasonInfo {
@@ -44,5 +48,14 @@ export function getGameInfo(gameId: string): GameInfo | null {
 export function getPlayerGameIds(playerId: string): string[] {
   return Object.keys(gameIdMap)
     .filter(gameId => gameIdMap[gameId].players[playerId])
+    .sort((a, b) => gameIdMap[a].date.localeCompare(gameIdMap[b].date))
+}
+
+export function getTeamGameIds(team: TeamAbbreviation): string[] {
+  return Object.keys(gameIdMap)
+    .filter(gameId => {
+      const game = gameIdMap[gameId]
+      return game.home === team || game.away === team
+    })
     .sort((a, b) => gameIdMap[a].date.localeCompare(gameIdMap[b].date))
 }

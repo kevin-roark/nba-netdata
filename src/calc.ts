@@ -1,8 +1,8 @@
 import { sum, standardDeviation, interquartileRange } from 'simple-statistics'
 import * as moment from 'moment'
 import { Moment } from 'moment'
-import { FieldGoal, ShotType, Percent, ShotInfo, allShotTypes, NonDerivedBoxScoreStats, ShotSet, BoxScore, GameLog, GameStats } from './types'
-import { mapObjects, mapObject } from './util'
+import { FieldGoal, ShotType, Percent, ShotInfo, allShotTypes, NonDerivedBoxScoreStats, ShotSet, BoxScore, GameLog, GameStats, PlayerBoxScoreStats } from './types'
+import { mapObjects, mapObject, pick } from './util'
 
 export interface EnhancedShootingStats {
   points: number,
@@ -22,9 +22,17 @@ export interface EnhancedGameStats {
   game: GameLog & { date: Moment },
   stats: EnhancedShootingBoxScoreStats,
 }
-export interface EnhancedTeamGameStats extends EnhancedGameStats {
-  playerStats: EnhancedShootingBoxScoreStats[]
+
+export type EnhancedShootingPlayerBoxScoreStats = EnhancedShootingBoxScoreStats & {
+  PLAYER_ID: string,
+  PLAYER_NAME: string,
+  START_POSITION: string,
+  COMMENT: string,
 }
+export interface EnhancedTeamGameStats extends EnhancedGameStats {
+  playerStats: EnhancedShootingPlayerBoxScoreStats[]
+}
+
 export type ShootingStat = keyof EnhancedShootingStats
 
 export type NumberMapper = (numbers: number[]) => number
@@ -230,9 +238,16 @@ export function calcEnhancedGameStats(gs: GameStats): EnhancedGameStats {
   }
 }
 
+export function calcEnhancedPlayerBoxScoreStats(p: PlayerBoxScoreStats): EnhancedShootingPlayerBoxScoreStats {
+  return {
+    ...pick(p, 'PLAYER_ID', 'PLAYER_NAME', 'START_POSITION', 'COMMENT'),
+    ...calcShootingDataFromBoxScoreStats(p)
+  }
+}
+
 export function calcEnhancedTeamGameStats(boxScore: BoxScore): EnhancedTeamGameStats {
   return {
-    playerStats: boxScore.playerStats.map(calcShootingDataFromBoxScoreStats),
+    playerStats: boxScore.playerStats.map(calcEnhancedPlayerBoxScoreStats),
     stats: combineBoxScoreStatsWithShootingData(boxScore.playerStats),
     game: { ...boxScore.game, date: moment(boxScore.game.GAME_DATE) }
   }

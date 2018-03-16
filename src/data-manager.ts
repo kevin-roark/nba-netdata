@@ -1,7 +1,8 @@
 import * as NBA from 'nba'
 import { join } from 'path'
-import { SortDirection, GameLog, BoxScore, Season, TeamAbbreviation, CompleteGameBoxScores, GameStats, PlayerBoxScores, PlayerInfo } from './types'
+import { SortDirection, GameLog, BoxScore, Season, TeamAbbreviation, CompleteGameBoxScores, GameStats, PlayerBoxScores } from './types'
 import { playerMap, gameIdMap, boxScoreSeasons } from './data'
+import { getPlayersFromBoxScore, filterPlayerStats } from './filter'
 import { processGameLogData, processBoxScoreData } from './prep'
 import { getPlayByPlayShotData, PlayByPlayShotData, RawNBAPlayByPlayData } from './play-by-play'
 import { pick } from './util'
@@ -46,12 +47,21 @@ export class DataManager {
     return await this.loadSeasonData('game_logs', season)
   }
 
-  async loadTeamBoxScores(season: Season, team: TeamAbbreviation): Promise<BoxScore[] | null> {
-    return await this.loadTeamData('box_scores', season, team)
+  async loadTeamBoxScores(season: Season, team: TeamAbbreviation, filterPlayers = true): Promise<BoxScore[] | null> {
+    let boxScores: BoxScore[] = await this.loadTeamData('box_scores', season, team)
+    if (!boxScores) {
+      return null
+    }
+
+    if (filterPlayers) {
+      boxScores = boxScores.map(bs => ({ game: bs.game, playerStats: filterPlayerStats(bs.playerStats) }))
+    }
+
+    return boxScores
   }
 
-  async loadTeamBoxScore(season: Season, team: TeamAbbreviation, gameId: string): Promise<BoxScore | null> {
-    const boxScores = await this.loadTeamBoxScores(season, team) || []
+  async loadTeamBoxScore(season: Season, team: TeamAbbreviation, gameId: string, filterPlayers = true): Promise<BoxScore | null> {
+    const boxScores = await this.loadTeamBoxScores(season, team, filterPlayers) || []
     const boxScore = boxScores.find(b => b.game.GAME_ID === gameId)
     return boxScore || null
   }
@@ -140,11 +150,4 @@ export class DataManager {
 
     return getPlayByPlayShotData(data, boxScores)
   }
-}
-
-function getPlayersFromBoxScore(boxScore: BoxScore): PlayerInfo[] {
-  return boxScore.playerStats
-    .filter(p => p.MIN > 0)
-    .map(p => playerMap.idMap[p.PLAYER_ID])
-    .filter(p => !!p)
 }

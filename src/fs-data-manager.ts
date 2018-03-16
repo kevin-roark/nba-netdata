@@ -2,7 +2,7 @@ import { join, resolve } from 'path'
 import * as fs from 'fs-extra'
 import slugify from 'slugify'
 import { GameLog, BoxScore, Season, TeamAbbreviation, TeamMap, PlayerMap, GameIdMap, GameOutcome } from './types'
-import { boxScoreSeasons, gameLogSeasons, allTeams } from './data'
+import { boxScoreSeasons, allTeams } from './data'
 import { DataManager, DataCategory } from './data-manager'
 import { getPlayerNames } from './util'
 
