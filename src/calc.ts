@@ -5,6 +5,7 @@ import { FieldGoal, ShotType, Percent, ShotInfo, allShotTypes, NonDerivedBoxScor
 import { mapObjects, mapObject } from './util'
 
 export interface EnhancedShootingStats {
+  points: number,
   freeThrowsMade: number, freeThrowsAttempted: number, freeThrowPercentage: number,
   rimMade: number, rimAttempted: number, rimPercentage: number,
   shortMidRangeMade: number, shortMidRangeAttempted: number, shortMidRangePercentage: number,
@@ -189,7 +190,10 @@ export function calcShootingData(shotSet: ShotSet): EnhancedShootingStats {
   const fieldGoalsMade = twoPointersMade + threePointersMade
   const fieldGoalsAttempted = twoPointersAttempted + threePointersAttempted
 
+  const points = freeThrowsMade + twoPointersMade + threePointersMade
+
   return {
+    points,
     freeThrowsMade, freeThrowsAttempted, freeThrowPercentage: calcShotPercentage(freeThrowsMade, freeThrowsAttempted),
     rimMade, rimAttempted, rimPercentage: calcShotPercentage(rimMade, rimAttempted),
     shortMidRangeMade, shortMidRangeAttempted, shortMidRangePercentage: calcShotPercentage(shortMidRangeMade, shortMidRangeAttempted),
@@ -236,7 +240,7 @@ export function calcEnhancedTeamGameStats(boxScore: BoxScore): EnhancedTeamGameS
 
 export const mapEnhancedShootingStats = (stats: EnhancedShootingStats[], mapper: NumberMapper): EnhancedShootingStats =>
   mapObjects(stats, (s, k) => mapper(s.map(stat => stat[k])),
-    'freeThrowsMade', 'freeThrowsAttempted', 'freeThrowPercentage',
+    'points', 'freeThrowsMade', 'freeThrowsAttempted', 'freeThrowPercentage',
     'rimMade', 'rimAttempted', 'rimPercentage',
     'shortMidRangeMade', 'shortMidRangeAttempted', 'shortMidRangePercentage',
     'longMidRangeMade', 'longMidRangeAttempted', 'longMidRangePercentage',
