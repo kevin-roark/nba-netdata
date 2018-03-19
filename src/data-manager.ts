@@ -62,7 +62,7 @@ export class DataManager {
 
   async loadTeamBoxScore(season: Season, team: TeamAbbreviation, gameId: string, filterPlayers = true): Promise<BoxScore | null> {
     const boxScores = await this.loadTeamBoxScores(season, team, filterPlayers) || []
-    const boxScore = boxScores.find(b => b.game.GAME_ID === gameId)
+    const boxScore = boxScores.find(b => String(b.game.GAME_ID) === String(gameId))
     return boxScore || null
   }
 
@@ -96,7 +96,16 @@ export class DataManager {
   }
 
   async loadGameBoxScores(gameId: string): Promise<CompleteGameBoxScores | null> {
-    const { season, home, away } = gameIdMap[gameId]
+    const game = gameIdMap[gameId]
+    if (!game) {
+      return null
+    }
+
+    const { season, home, away } = game
+    return await this.loadGameBoxScoresRaw(gameId, season, home, away)
+  }
+
+  async loadGameBoxScoresRaw(gameId: string, season: Season, home: TeamAbbreviation, away: TeamAbbreviation): Promise<CompleteGameBoxScores | null> {
     const [homeScore, awayScore] = await Promise.all([
       this.loadTeamBoxScore(season, home, gameId),
       this.loadTeamBoxScore(season, away, gameId)
@@ -127,7 +136,7 @@ export class DataManager {
     return await this.fetchBoxScoreWithGameLogs({ GameID: options.GameID, gameLogs })
   }
 
-  async fetchBoxScoreWithGameLogs(options: { GameID: string, gameLogs: GameLog[] }): Promise<BoxScore[]> {
+  async fetchBoxScoreWithGameLogs(options: { GameID: string, gameLogs: GameLog[] }): Promise<BoxScore[] | null> {
     const data = await NBA.stats.boxScore(pick(options, 'GameID'))
     return processBoxScoreData(options.gameLogs, data)
   }

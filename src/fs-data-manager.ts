@@ -132,25 +132,29 @@ export class FsDataManager extends DataManager {
   async createGameIdMap() {
     const gameIdMap: GameIdMap = {}
 
-    await Promise.all(boxScoreSeasons.map(async (season) => {
+    for (const season of boxScoreSeasons) {
       const gameLogs = await this.loadGameLogs(season) || []
-      await Promise.all(gameLogs.map(async (game) => {
+      for (const game of gameLogs) {
         const { GAME_ID: id, GAME_DATE: date, HOME, OUTCOME, TEAM_ABBREVIATION, OPPONENT_TEAM_ABBREVIATION } = game
         if (!gameIdMap[id]) {
           const home = HOME ? TEAM_ABBREVIATION : OPPONENT_TEAM_ABBREVIATION
           const away = HOME ? OPPONENT_TEAM_ABBREVIATION : TEAM_ABBREVIATION
           const winner = OUTCOME === GameOutcome.Win ? TEAM_ABBREVIATION : OPPONENT_TEAM_ABBREVIATION
 
-          const boxScores = (await this.loadGameBoxScores(game.GAME_ID))!
-          const players: {[playerId: string]: true} = {}
-          boxScores.home.players.concat(boxScores.away.players).forEach(p => players[p.id] = true)
-          const homePoints = boxScores.home.score.game.stats.PTS
-          const awayPoints = boxScores.away.score.game.stats.PTS
+          const boxScores = (await this.loadGameBoxScoresRaw(game.GAME_ID, season, home, away))
+          if (boxScores) {
+            const players: {[playerId: string]: true} = {}
+            boxScores.home.players.concat(boxScores.away.players).forEach(p => players[p.id] = true)
+            const homePoints = boxScores.home.score.game.stats.PTS
+            const awayPoints = boxScores.away.score.game.stats.PTS
 
-          gameIdMap[id] = { id, date, season, home, homePoints, away, awayPoints, winner, players }
+            gameIdMap[id] = { id, date, season, home, homePoints, away, awayPoints, winner, players }
+          } else {
+            console.log('no game...', date, id, home, away, winner)
+          }
         }
-      }))
-    }))
+      }
+    }
 
     await this.writeJSON('game_id_map.json', gameIdMap)
   }

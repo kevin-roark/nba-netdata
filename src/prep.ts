@@ -27,8 +27,11 @@ export function processGameLogData(gameLogData: RawNBAStatsData): GameLog[] {
   return gameLogs
 }
 
-export function processBoxScoreData(gameLogs: GameLog[], boxScoreData: RawNBAStatsData): BoxScore[] {
+export function processBoxScoreData(gameLogs: GameLog[], boxScoreData: RawNBAStatsData): BoxScore[] | null {
   const teamStats = processResultSet(boxScoreData.resultSets.find(r => r.name === 'TeamStats')!)
+  if (teamStats.length === 0) {
+    return null
+  }
 
   const pStats = processResultSet(boxScoreData.resultSets.find(r => r.name === 'PlayerStats')!)
     .map(processPlayerBoxScoreStats)
